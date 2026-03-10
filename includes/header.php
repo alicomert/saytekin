@@ -306,12 +306,11 @@ $kurlar = getDovizKurlari();
             endif;
         endforeach; 
         ?>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:20px;">
+            <div style="margin-left:auto;display:flex;align-items:center;gap:20px;">
             <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#141820;border-radius:8px;border:1px solid #1e2430;">
                 <span style="font-size:14px;">🕐</span>
                 <span style="color:#64748b;font-size:12px;"><?php echo date('d.m.Y H:i'); ?></span>
             </div>
-            <?php if (isAdmin()): ?>
             <div style="display:flex;align-items:center;gap:8px;">
                 <button onclick="checkUpdateManually()" id="btn-check-update" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e2430;border:1px solid #2d3748;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa';" onmouseout="this.style.borderColor='#2d3748';this.style.color='#94a3b8';">
                     <span style="font-size:14px;">🔄</span>
@@ -323,7 +322,6 @@ $kurlar = getDovizKurlari();
                     <span id="update-badge" style="background:#f59e0b;color:#000;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:4px;">1</span>
                 </button>
             </div>
-            <?php endif; ?>
         </div>
     </div>
     <?php endif; ?>
@@ -404,7 +402,6 @@ $kurlar = getDovizKurlari();
     <?php endif; ?>
     <?php endif; ?>
     
-    <?php if (isAdmin()): ?>
     <!-- Güncelleme Modal -->
     <div id="update-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:2000;align-items:center;justify-content:center;">
         <div style="background:#141820;border:1px solid #1e2430;border-radius:12px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
@@ -587,7 +584,6 @@ $kurlar = getDovizKurlari();
         if (btnUpdate) btnUpdate.style.display = 'none';
     }
     </script>
-    <?php endif; ?>
     
     <!-- Main Content -->
     <div style="padding:24px 28px;max-width:1400px;margin:0 auto;animation:fadeIn 0.3s;">

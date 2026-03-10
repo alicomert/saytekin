@@ -4,11 +4,6 @@ require_once __DIR__ . '/../includes/functions.php';
 
 header('Content-Type: application/json');
 
-if (!isAdmin()) {
-    echo json_encode(['error' => 'Yetkisiz erişim']);
-    exit;
-}
-
 $updateInfo = checkForUpdates();
 $db = getDB();
 

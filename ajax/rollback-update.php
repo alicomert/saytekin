@@ -4,11 +4,6 @@ require_once __DIR__ . '/../includes/functions.php';
 
 header('Content-Type: application/json');
 
-if (!isAdmin()) {
-    echo json_encode(['success' => false, 'error' => 'Yetkisiz erişim']);
-    exit;
-}
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Geçersiz istek']);
     exit;
