@@ -1,6 +1,9 @@
 <?php
 require_once 'includes/header.php';
 
+// Yetki kontrolü - sadece görüntüleme
+checkPermission('view');
+
 $pageTitle = 'Tum Liste';
 
 // Filtreler

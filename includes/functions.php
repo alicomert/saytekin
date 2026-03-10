@@ -538,3 +538,385 @@ function deleteFiyatGecmisi($id) {
     $stmt = $db->prepare("DELETE FROM fiyat_gecmisi WHERE id = ?");
     $stmt->execute([$id]);
 }
+
+// =====================================================
+// ROL SİSTEMİ
+// =====================================================
+
+function getCurrentUserRole() {
+    if (!isLoggedIn()) return null;
+    return $_SESSION['user_role'] ?? 'user';
+}
+
+function isAdmin() {
+    return getCurrentUserRole() === 'admin';
+}
+
+function isManager() {
+    $role = getCurrentUserRole();
+    return $role === 'admin' || $role === 'manager';
+}
+
+function canEdit() {
+    return isManager();
+}
+
+function canDelete() {
+    return isAdmin();
+}
+
+function checkPermission($action = 'view') {
+    // Public access kontrolü
+    $db = getDB();
+    $publicAccess = $db->query("SELECT setting_value FROM system_settings WHERE setting_key = 'public_access'")->fetchColumn() ?? '0';
+    
+    if ($publicAccess === '1' && $action === 'view' && !isLoggedIn()) {
+        return true; // Public access aktifse ve sadece görüntüleme yapılacaksa izin ver
+    }
+    
+    if (!isLoggedIn()) {
+        header('Location: login.php');
+        exit;
+    }
+    
+    switch ($action) {
+        case 'view':
+            return true; // Herkes görüntüleyebilir
+        case 'edit':
+        case 'add':
+            if (!canEdit()) {
+                setFlashMessage('error', 'Bu işlem için yetkiniz yok.');
+                header('Location: index.php');
+                exit;
+            }
+            return true;
+        case 'delete':
+        case 'admin':
+            if (!isAdmin()) {
+                setFlashMessage('error', 'Bu işlem için admin yetkisi gerekiyor.');
+                header('Location: index.php');
+                exit;
+            }
+            return true;
+        default:
+            return false;
+    }
+}
+
+// =====================================================
+// GİTHUB GÜNCELLEME SİSTEMİ
+// =====================================================
+
+function getCurrentCommitSHA() {
+    $db = getDB();
+    return $db->query("SELECT setting_value FROM system_settings WHERE setting_key = 'last_commit_sha'")->fetchColumn();
+}
+
+function getLatestGitHubCommit() {
+    $repo = 'alicomert/saytekin';
+    $url = "https://api.github.com/repos/{$repo}/commits/main";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Hammadde-Takip-Updater');
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && $response) {
+        return json_decode($response, true);
+    }
+    
+    return null;
+}
+
+function checkForUpdates() {
+    $latest = getLatestGitHubCommit();
+    if (!$latest) return ['available' => false, 'error' => 'GitHub bağlantısı kurulamadı'];
+    
+    $currentSHA = getCurrentCommitSHA();
+    $latestSHA = $latest['sha'] ?? null;
+    
+    return [
+        'available' => $latestSHA !== $currentSHA,
+        'current_sha' => $currentSHA,
+        'latest_sha' => $latestSHA,
+        'message' => $latest['commit']['message'] ?? 'Bilinmiyor',
+        'date' => $latest['commit']['committer']['date'] ?? null,
+        'author' => $latest['commit']['author']['name'] ?? 'Bilinmiyor'
+    ];
+}
+
+function downloadLatestRelease() {
+    $repo = 'alicomert/saytekin';
+    $zipUrl = "https://github.com/{$repo}/archive/refs/heads/main.zip";
+    
+    $uploadDir = __DIR__ . '/../uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    
+    $zipFile = $uploadDir . 'update_' . time() . '.zip';
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $zipUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Hammadde-Takip-Updater');
+    curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $data = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && $data) {
+        file_put_contents($zipFile, $data);
+        return $zipFile;
+    }
+    
+    return false;
+}
+
+function createBackup() {
+    $backupDir = __DIR__ . '/../backups/' . date('Y-m-d_H-i-s') . '/';
+    if (!is_dir($backupDir)) {
+        mkdir($backupDir, 0755, true);
+    }
+    
+    // PHP dosyalarını yedekle
+    $sourceDir = __DIR__ . '/../';
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+    
+    $backedUpFiles = [];
+    foreach ($iterator as $file) {
+        if ($file->isFile() && $file->getExtension() === 'php') {
+            $targetPath = $backupDir . str_replace($sourceDir, '', $file->getPathname());
+            $targetDir = dirname($targetPath);
+            
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0755, true);
+            }
+            
+            copy($file->getPathname(), $targetPath);
+            $backedUpFiles[] = str_replace($sourceDir, '', $file->getPathname());
+        }
+    }
+    
+    // Yedek bilgisini kaydet
+    $db = getDB();
+    $stmt = $db->prepare("INSERT INTO update_logs (action, details, created_at) VALUES ('backup', ?, NOW())");
+    $stmt->execute([json_encode(['files' => $backedUpFiles, 'backup_dir' => $backupDir])]);
+    
+    return $backupDir;
+}
+
+function extractAndApplyUpdate($zipFile) {
+    $extractDir = __DIR__ . '/../update_temp/';
+    
+    // Eski temp dizini varsa temizle
+    if (is_dir($extractDir)) {
+        removeDirectory($extractDir);
+    }
+    mkdir($extractDir, 0755, true);
+    
+    // Zip'i aç
+    $zip = new ZipArchive();
+    if ($zip->open($zipFile) === TRUE) {
+        $zip->extractTo($extractDir);
+        $zip->close();
+    } else {
+        return ['success' => false, 'error' => 'ZIP dosyası açılamadı'];
+    }
+    
+    // Çıkarılan klasörü bul
+    $extractedFolders = glob($extractDir . '*', GLOB_ONLYDIR);
+    if (empty($extractedFolders)) {
+        return ['success' => false, 'error' => 'ZIP içeriği bulunamadı'];
+    }
+    
+    $sourceFolder = $extractedFolders[0];
+    $targetFolder = __DIR__ . '/../';
+    
+    // Dosyaları kopyala (config.php ve uploads/ hariç)
+    $errors = [];
+    $updatedFiles = [];
+    
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($sourceFolder, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+    
+    foreach ($iterator as $file) {
+        $relativePath = str_replace($sourceFolder . '/', '', $file->getPathname());
+        
+        // Config.php ve uploads klasörünü atla
+        if (strpos($relativePath, 'includes/config.php') !== false ||
+            strpos($relativePath, 'uploads/') === 0 ||
+            strpos($relativePath, 'backups/') === 0) {
+            continue;
+        }
+        
+        $targetPath = $targetFolder . $relativePath;
+        
+        if ($file->isDir()) {
+            if (!is_dir($targetPath)) {
+                mkdir($targetPath, 0755, true);
+            }
+        } else {
+            if (!is_dir(dirname($targetPath))) {
+                mkdir(dirname($targetPath), 0755, true);
+            }
+            
+            if (copy($file->getPathname(), $targetPath)) {
+                $updatedFiles[] = $relativePath;
+            } else {
+                $errors[] = $relativePath;
+            }
+        }
+    }
+    
+    // Temp dizinini temizle
+    removeDirectory($extractDir);
+    unlink($zipFile);
+    
+    return [
+        'success' => empty($errors),
+        'updated_files' => $updatedFiles,
+        'errors' => $errors
+    ];
+}
+
+function applyDatabaseMigrations() {
+    $db = getDB();
+    
+    // Migration tablosu yoksa oluştur
+    $db->exec("CREATE TABLE IF NOT EXISTS schema_migrations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        filename VARCHAR(255) NOT NULL UNIQUE,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    // Database klasöründeki migration dosyalarını kontrol et
+    $migrationDir = __DIR__ . '/../Database/';
+    if (!is_dir($migrationDir)) {
+        return ['success' => true, 'message' => 'Migration dizini bulunamadı'];
+    }
+    
+    $files = glob($migrationDir . '*.sql');
+    sort($files);
+    
+    $applied = [];
+    $errors = [];
+    
+    foreach ($files as $file) {
+        $filename = basename($file);
+        
+        // Daha önce uygulanmış mı kontrol et
+        $stmt = $db->prepare("SELECT COUNT(*) FROM schema_migrations WHERE filename = ?");
+        $stmt->execute([$filename]);
+        if ($stmt->fetchColumn() > 0) {
+            continue;
+        }
+        
+        // SQL'i uygula
+        $sql = file_get_contents($file);
+        try {
+            $db->exec($sql);
+            
+            // Migration kaydını ekle
+            $stmt = $db->prepare("INSERT INTO schema_migrations (filename) VALUES (?)");
+            $stmt->execute([$filename]);
+            
+            $applied[] = $filename;
+        } catch (Exception $e) {
+            $errors[] = $filename . ': ' . $e->getMessage();
+        }
+    }
+    
+    return [
+        'success' => empty($errors),
+        'applied' => $applied,
+        'errors' => $errors
+    ];
+}
+
+function updateSystemVersion($commitSHA) {
+    $db = getDB();
+    $stmt = $db->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES ('last_commit_sha', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+    $stmt->execute([$commitSHA, $commitSHA]);
+    
+    // Log kaydı
+    $stmt = $db->prepare("INSERT INTO update_logs (action, details, created_at) VALUES ('update', ?, NOW())");
+    $stmt->execute([json_encode(['sha' => $commitSHA, 'date' => date('Y-m-d H:i:s')])]);
+}
+
+function rollbackUpdate($backupDir) {
+    if (!is_dir($backupDir)) {
+        return ['success' => false, 'error' => 'Yedek dizini bulunamadı'];
+    }
+    
+    $sourceDir = $backupDir;
+    $targetDir = __DIR__ . '/../';
+    
+    $restoredFiles = [];
+    $errors = [];
+    
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+    
+    foreach ($iterator as $file) {
+        if ($file->isFile()) {
+            $relativePath = str_replace($sourceDir, '', $file->getPathname());
+            $targetPath = $targetDir . $relativePath;
+            
+            if (!is_dir(dirname($targetPath))) {
+                mkdir(dirname($targetPath), 0755, true);
+            }
+            
+            if (copy($file->getPathname(), $targetPath)) {
+                $restoredFiles[] = $relativePath;
+            } else {
+                $errors[] = $relativePath;
+            }
+        }
+    }
+    
+    return [
+        'success' => empty($errors),
+        'restored_files' => $restoredFiles,
+        'errors' => $errors
+    ];
+}
+
+function removeDirectory($dir) {
+    if (!is_dir($dir)) return;
+    
+    $files = array_diff(scandir($dir), ['.', '..']);
+    foreach ($files as $file) {
+        $path = $dir . '/' . $file;
+        is_dir($path) ? removeDirectory($path) : unlink($path);
+    }
+    rmdir($dir);
+}
+
+function getLastBackupDir() {
+    $backupBase = __DIR__ . '/../backups/';
+    if (!is_dir($backupBase)) return null;
+    
+    $dirs = glob($backupBase . '*', GLOB_ONLYDIR);
+    if (empty($dirs)) return null;
+    
+    rsort($dirs);
+    return $dirs[0] . '/';
+}

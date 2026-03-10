@@ -290,6 +290,15 @@ $kurlar = getDovizKurlari();
         endforeach; 
         ?>
         <div style="margin-left:auto;color:#334155;white-space:nowrap;">🕐 <?php echo date('d.m.Y H:i'); ?></div>
+        <?php if (isAdmin()): 
+            $updateCheck = checkForUpdates();
+            if ($updateCheck['available']):
+        ?>
+        <div id="update-notification" style="display:flex;align-items:center;gap:8px;margin-left:16px;">
+            <span style="color:#f59e0b;font-size:11px;">🔄 Yeni güncelleme var!</span>
+            <button onclick="showUpdateModal()" style="background:#f59e0b;border:none;border-radius:4px;padding:4px 10px;color:#000;font-size:10px;font-weight:700;cursor:pointer;">Güncelle</button>
+        </div>
+        <?php endif; endif; ?>
     </div>
     <?php endif; ?>
 
@@ -342,6 +351,9 @@ $kurlar = getDovizKurlari();
             <a href="index.php" class="btn-secondary">← Listeye Dön</a>
             <?php endif; ?>
             
+            <?php if (isAdmin()): ?>
+            <a href="sabit-tanimlar.php" class="nav-btn" style="margin-left: 8px;">⚙️ Sabit Tanımlar</a>
+            <?php endif; ?>
             <a href="logout.php" class="btn-secondary" style="margin-left: 8px;">Çıkış</a>
         </div>
     </div>
@@ -362,6 +374,129 @@ $kurlar = getDovizKurlari();
         }, 3000);
     </script>
     <?php endif; ?>
+    <?php endif; ?>
+    
+    <?php if (isAdmin()): ?>
+    <!-- Güncelleme Modal -->
+    <div id="update-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:2000;align-items:center;justify-content:center;">
+        <div style="background:#141820;border:1px solid #1e2430;border-radius:12px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
+            <h3 style="color:#f1f5f9;margin-bottom:16px;">🔄 Sistem Güncellemesi</h3>
+            <div id="update-info" style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:16px;font-size:12px;">
+                <p style="color:#94a3b8;margin-bottom:8px;">GitHub'dan yeni güncelleme bulundu!</p>
+                <p style="color:#64748b;margin:4px 0;">Yazar: <span id="update-author" style="color:#f1f5f9;">-</span></p>
+                <p style="color:#64748b;margin:4px 0;">Tarih: <span id="update-date" style="color:#f1f5f9;">-</span></p>
+                <p style="color:#64748b;margin:4px 0;">Mesaj: <span id="update-message" style="color:#f1f5f9;">-</span></p>
+            </div>
+            <div id="update-progress" style="display:none;margin-bottom:16px;">
+                <div style="background:#0f1117;border-radius:8px;padding:12px;">
+                    <div id="progress-steps"></div>
+                </div>
+            </div>
+            <div id="update-actions" style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="closeUpdateModal()" class="btn-secondary">İptal</button>
+                <button onclick="startUpdate()" class="btn-primary">Güncellemeyi Uygula</button>
+            </div>
+            <div id="update-error" style="display:none;background:#ef444433;border:1px solid #ef444455;color:#ef4444;padding:12px;border-radius:8px;margin-top:16px;font-size:12px;">
+                <strong>Hata oluştu!</strong>
+                <p id="error-message" style="margin:4px 0 0 0;"></p>
+                <button onclick="rollbackUpdate()" style="background:#ef4444;border:none;border-radius:4px;padding:6px 12px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;margin-top:8px;">Geri Al</button>
+            </div>
+            <div id="update-success" style="display:none;background:#10b98133;border:1px solid #10b98155;color:#10b981;padding:12px;border-radius:8px;margin-top:16px;font-size:12px;">
+                ✅ <strong>Güncelleme başarılı!</strong>
+                <p style="margin:4px 0 0 0;">Sistem yeni sürüme güncellendi. Sayfa yenileniyor...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    let updateData = null;
+    
+    function showUpdateModal() {
+        document.getElementById('update-modal').style.display = 'flex';
+        checkUpdateDetails();
+    }
+    
+    function closeUpdateModal() {
+        document.getElementById('update-modal').style.display = 'none';
+        resetUpdateModal();
+    }
+    
+    function resetUpdateModal() {
+        document.getElementById('update-progress').style.display = 'none';
+        document.getElementById('update-actions').style.display = 'flex';
+        document.getElementById('update-error').style.display = 'none';
+        document.getElementById('update-success').style.display = 'none';
+        document.getElementById('progress-steps').innerHTML = '';
+    }
+    
+    function checkUpdateDetails() {
+        fetch('ajax/check-update.php')
+            .then(r => r.json())
+            .then(data => {
+                updateData = data;
+                if (data.available) {
+                    document.getElementById('update-author').textContent = data.author || 'Bilinmiyor';
+                    document.getElementById('update-date').textContent = data.date ? new Date(data.date).toLocaleString('tr-TR') : '-';
+                    document.getElementById('update-message').textContent = data.message || 'Bilinmiyor';
+                }
+            });
+    }
+    
+    function startUpdate() {
+        document.getElementById('update-actions').style.display = 'none';
+        document.getElementById('update-progress').style.display = 'block';
+        
+        fetch('ajax/apply-update.php', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                updateProgressUI(data.steps);
+                
+                if (data.success) {
+                    document.getElementById('update-success').style.display = 'block';
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    document.getElementById('error-message').textContent = data.error || 'Bilinmeyen hata';
+                    document.getElementById('update-error').style.display = 'block';
+                }
+            })
+            .catch(err => {
+                document.getElementById('error-message').textContent = err.message;
+                document.getElementById('update-error').style.display = 'block';
+            });
+    }
+    
+    function updateProgressUI(steps) {
+        const container = document.getElementById('progress-steps');
+        container.innerHTML = steps.map(s => `
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;">
+                <span style="color:${s.status === 'completed' ? '#10b981' : s.status === 'error' ? '#ef4444' : '#f59e0b'};">
+                    ${s.status === 'completed' ? '✓' : s.status === 'error' ? '✕' : '⏳'}
+                </span>
+                <span style="color:#e2e8f0;">${s.name}</span>
+                ${s.detail ? `<span style="color:#64748b;margin-left:auto;font-size:11px;">${s.detail}</span>` : ''}
+            </div>
+        `).join('');
+    }
+    
+    function rollbackUpdate() {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Geri alınıyor...';
+        
+        fetch('ajax/rollback-update.php', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Sistem önceki sürüme geri yüklendi. Sayfa yenileniyor...');
+                    location.reload();
+                } else {
+                    alert('Geri alma başarısız: ' + data.error);
+                    btn.disabled = false;
+                    btn.textContent = 'Geri Al';
+                }
+            });
+    }
+    </script>
     <?php endif; ?>
     
     <!-- Main Content -->
