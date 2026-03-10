@@ -820,17 +820,21 @@ function extractAndApplyUpdate($zipFile) {
 function applyDatabaseMigrations() {
     $db = getDB();
     
-    // Migration tablosu yoksa oluştur
-    $db->exec("CREATE TABLE IF NOT EXISTS schema_migrations (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        filename VARCHAR(255) NOT NULL UNIQUE,
-        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )");
+    // Migration tablosu yoksa oluştur (prepare/execute kullanarak)
+    try {
+        $db->exec("CREATE TABLE IF NOT EXISTS schema_migrations (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            filename VARCHAR(255) NOT NULL UNIQUE,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+    } catch (PDOException $e) {
+        return ['success' => false, 'errors' => ['Migration tablosu oluşturulamadı: ' . $e->getMessage()]];
+    }
     
     // Database klasöründeki migration dosyalarını kontrol et
     $migrationDir = __DIR__ . '/../Database/';
     if (!is_dir($migrationDir)) {
-        return ['success' => true, 'message' => 'Migration dizini bulunamadı'];
+        return ['success' => true, 'message' => 'Migration dizini bulunamadı', 'applied' => []];
     }
     
     $files = glob($migrationDir . '*.sql');
@@ -839,42 +843,48 @@ function applyDatabaseMigrations() {
     $applied = [];
     $errors = [];
     
+    // Önce uygulanmış migration'ları al
+    $appliedMigrations = [];
+    try {
+        $result = $db->query("SELECT filename FROM schema_migrations");
+        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+            $appliedMigrations[] = $row['filename'];
+        }
+    } catch (PDOException $e) {
+        // Tablo boş olabilir, devam et
+    }
+    
     foreach ($files as $file) {
         $filename = basename($file);
         
         // Daha önce uygulanmış mı kontrol et
-        $checkStmt = $db->prepare("SELECT COUNT(*) as cnt FROM schema_migrations WHERE filename = ?");
-        $checkStmt->execute([$filename]);
-        $row = $checkStmt->fetch(PDO::FETCH_ASSOC);
-        $checkStmt->closeCursor();
-        
-        if ($row && $row['cnt'] > 0) {
+        if (in_array($filename, $appliedMigrations)) {
             continue;
         }
         
-        // SQL'i oku ve ayrıştır
+        // SQL'i oku ve çalıştır
         $sql = file_get_contents($file);
-        // Yorumları kaldır
-        $sql = preg_replace('/--.*\n/', "\n", $sql);
-        $sql = preg_replace('/\/\*.*?\*\//s', '', $sql);
-        
-        // Tek tek statement'ları çalıştır
-        $statements = array_filter(array_map('trim', explode(';', $sql)));
         
         try {
-            foreach ($statements as $statement) {
-                if (!empty($statement)) {
-                    $db->exec($statement);
-                }
-            }
+            // Transaction başlat
+            $db->beginTransaction();
+            
+            // SQL'i çalıştır (multi-statement)
+            $db->exec($sql);
             
             // Migration kaydını ekle
-            $insertStmt = $db->prepare("INSERT INTO schema_migrations (filename) VALUES (?)");
-            $insertStmt->execute([$filename]);
-            $insertStmt->closeCursor();
+            $stmt = $db->prepare("INSERT INTO schema_migrations (filename) VALUES (?)");
+            $stmt->execute([$filename]);
+            
+            // Transaction commit
+            $db->commit();
             
             $applied[] = $filename;
         } catch (Exception $e) {
+            // Rollback
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
             $errors[] = $filename . ': ' . $e->getMessage();
         }
     }
