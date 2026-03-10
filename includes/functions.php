@@ -821,11 +821,13 @@ function applyDatabaseMigrations() {
         $filename = basename($file);
         
         // Daha önce uygulanmış mı kontrol et
-        $stmt = $db->prepare("SELECT COUNT(*) FROM schema_migrations WHERE filename = ?");
-        $stmt->execute([$filename]);
-        if ($stmt->fetchColumn() > 0) {
+        $checkStmt = $db->prepare("SELECT COUNT(*) FROM schema_migrations WHERE filename = ?");
+        $checkStmt->execute([$filename]);
+        if ($checkStmt->fetchColumn() > 0) {
+            $checkStmt->closeCursor();
             continue;
         }
+        $checkStmt->closeCursor();
         
         // SQL'i uygula
         $sql = file_get_contents($file);
@@ -833,8 +835,9 @@ function applyDatabaseMigrations() {
             $db->exec($sql);
             
             // Migration kaydını ekle
-            $stmt = $db->prepare("INSERT INTO schema_migrations (filename) VALUES (?)");
-            $stmt->execute([$filename]);
+            $insertStmt = $db->prepare("INSERT INTO schema_migrations (filename) VALUES (?)");
+            $insertStmt->execute([$filename]);
+            $insertStmt->closeCursor();
             
             $applied[] = $filename;
         } catch (Exception $e) {
@@ -851,12 +854,14 @@ function applyDatabaseMigrations() {
 
 function updateSystemVersion($commitSHA) {
     $db = getDB();
-    $stmt = $db->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES ('last_commit_sha', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
-    $stmt->execute([$commitSHA, $commitSHA]);
+    $stmt1 = $db->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES ('last_commit_sha', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+    $stmt1->execute([$commitSHA, $commitSHA]);
+    $stmt1->closeCursor();
     
     // Log kaydı
-    $stmt = $db->prepare("INSERT INTO update_logs (action, details, created_at) VALUES ('update', ?, NOW())");
-    $stmt->execute([json_encode(['sha' => $commitSHA, 'date' => date('Y-m-d H:i:s')])]);
+    $stmt2 = $db->prepare("INSERT INTO update_logs (action, details, created_at) VALUES ('update', ?, NOW())");
+    $stmt2->execute([json_encode(['sha' => $commitSHA, 'date' => date('Y-m-d H:i:s')])]);
+    $stmt2->closeCursor();
 }
 
 function rollbackUpdate($backupDir) {

@@ -8,8 +8,9 @@ $updateInfo = checkForUpdates();
 $db = getDB();
 
 // Son kontrol zamanını kaydet
-$stmt = $db->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES ('last_update_check', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
-$stmt->execute([time()]);
+$stmt1 = $db->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES ('last_update_check', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+$stmt1->execute([time()]);
+$stmt1->closeCursor();
 
 // Log kaydı ekle
 $logDetails = [
@@ -20,7 +21,8 @@ $logDetails = [
     'timestamp' => date('Y-m-d H:i:s')
 ];
 
-$stmt = $db->prepare("INSERT INTO update_logs (action, details, created_at) VALUES ('check', ?, NOW())");
-$stmt->execute([json_encode($logDetails)]);
+$stmt2 = $db->prepare("INSERT INTO update_logs (action, details, created_at) VALUES ('check', ?, NOW())");
+$stmt2->execute([json_encode($logDetails)]);
+$stmt2->closeCursor();
 
 echo json_encode($updateInfo);
