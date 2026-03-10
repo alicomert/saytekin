@@ -25,10 +25,11 @@ $pageTitle = 'Tum Liste (' . count($hammaddeler) . ' kayit)';
 
 <!-- Filtreler -->
 <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
-    <form method="GET" action="" style="display:flex;gap:12px;flex:1;flex-wrap:wrap;align-items:center;">
+    <form method="GET" action="" id="filterForm" style="display:flex;gap:12px;flex:1;flex-wrap:wrap;align-items:center;">
         <input type="text" name="arama" value="<?php echo htmlspecialchars($filters['arama']); ?>" 
             placeholder="🔍  Hammadde, stok kodu veya tur ara..."
-            style="flex:1;min-width:220px;background:#141820;border:1px solid #1e2430;border-radius:8px;padding:9px 14px;color:#e2e8f0;font-size:13px;outline:none;">
+            style="flex:1;min-width:220px;background:#141820;border:1px solid #1e2430;border-radius:8px;padding:9px 14px;color:#e2e8f0;font-size:13px;outline:none;"
+            oninput="debounceSubmit()">
         
         <div style="display:flex;gap:6px;">
             <?php foreach (['Tumu' => 'Tumu', 'S' => 'S - Standart', 'K' => 'K - Kapali'] as $val => $label): ?>
@@ -176,5 +177,15 @@ $pageTitle = 'Tum Liste (' . count($hammaddeler) . ' kayit)';
     </div>
 </div>
 <?php endif; ?>
+
+<script>
+let debounceTimer;
+function debounceSubmit() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        document.getElementById('filterForm').submit();
+    }, 500); // 500ms bekle ve gönder
+}
+</script>
 
 <?php require_once 'includes/footer.php'; ?>

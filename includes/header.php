@@ -214,6 +214,8 @@ $kurlar = getDovizKurlari();
             transition: all 0.2s;
             text-decoration: none;
             margin: 0 4px;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
         .nav-btn:hover { border-color: #2d3748; color: #94a3b8; }
         
@@ -328,14 +330,14 @@ $kurlar = getDovizKurlari();
 
     <!-- Header -->
     <div style="border-bottom:1px solid #1e2430;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;background:#0d1017;position:sticky;top:0;z-index:100;">
-        <div style="display:flex;align-items:center;gap:12;">
-            <div style="width:34;height:34;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:10;display:flex;align-items:center;justify-content:center;font-size:16;color:#fff;">⬡</div>
-            <div>
-                <div style="font-size:15;font-weight:700;color:#f1f5f9;letter-spacing:0.03em;">HAMMADDE TAKİP</div>
-                <div style="font-size:10;color:#475569;letter-spacing:0.06em;">VERİ GİRİŞ SİSTEMİ</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            <div style="width:34px;height:34px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;flex-shrink:0;">⬡</div>
+            <div style="flex-shrink:0;">
+                <div style="font-size:15px;font-weight:700;color:#f1f5f9;letter-spacing:0.03em;white-space:nowrap;">HAMMADDE TAKİP</div>
+                <div style="font-size:10px;color:#475569;letter-spacing:0.06em;white-space:nowrap;">VERİ GİRİŞ SİSTEMİ</div>
             </div>
         </div>
-        <div style="display:flex;align-items:center;gap:16px;">
+        <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;">
             <?php
             $navItems = [
                 ['url' => 'index.php', 'key' => 'liste', 'label' => '📋 Tüm Liste', 'page' => 'index'],
@@ -363,9 +365,9 @@ $kurlar = getDovizKurlari();
             </a>
             <?php endforeach; ?>
             
-            <div style="width:2;height:28;background:#1e2430;margin:0 8px;"></div>
+            <div style="width:2px;height:28px;background:#1e2430;margin:0 8px;flex-shrink:0;"></div>
             
-            <span style="font-size:12;color:#475569;">
+            <span style="font-size:12px;color:#475569;white-space:nowrap;">
                 <?php 
                 $totalCount = count(getHammaddeler());
                 echo $totalCount . ' kayıt';
