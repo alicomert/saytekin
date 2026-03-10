@@ -843,18 +843,30 @@ function applyDatabaseMigrations() {
         $filename = basename($file);
         
         // Daha önce uygulanmış mı kontrol et
-        $checkStmt = $db->prepare("SELECT COUNT(*) FROM schema_migrations WHERE filename = ?");
+        $checkStmt = $db->prepare("SELECT COUNT(*) as cnt FROM schema_migrations WHERE filename = ?");
         $checkStmt->execute([$filename]);
-        if ($checkStmt->fetchColumn() > 0) {
-            $checkStmt->closeCursor();
-            continue;
-        }
+        $row = $checkStmt->fetch(PDO::FETCH_ASSOC);
         $checkStmt->closeCursor();
         
-        // SQL'i uygula
+        if ($row && $row['cnt'] > 0) {
+            continue;
+        }
+        
+        // SQL'i oku ve ayrıştır
         $sql = file_get_contents($file);
+        // Yorumları kaldır
+        $sql = preg_replace('/--.*\n/', "\n", $sql);
+        $sql = preg_replace('/\/\*.*?\*\//s', '', $sql);
+        
+        // Tek tek statement'ları çalıştır
+        $statements = array_filter(array_map('trim', explode(';', $sql)));
+        
         try {
-            $db->exec($sql);
+            foreach ($statements as $statement) {
+                if (!empty($statement)) {
+                    $db->exec($statement);
+                }
+            }
             
             // Migration kaydını ekle
             $insertStmt = $db->prepare("INSERT INTO schema_migrations (filename) VALUES (?)");
