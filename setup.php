@@ -32,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Gecerli bir e-posta adresi girin.';
     } else {
-        // Kullanıcıyı oluştur
         try {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
             
@@ -41,8 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                ->execute([$username, $password_hash, $email ?: $username . '@localhost', $full_name]);
             
             $success = 'Kurulum basariyla tamamlandi! Simdi giris yapabilirsiniz.';
-            
-            // 3 saniye sonra login'e yönlendir
             header('Refresh: 3; URL=login.php');
             
         } catch (PDOException $e) {
@@ -56,67 +53,171 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kurulum - <?php echo SITE_TITLE; ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Kurulum - Hammadde Takip</title>
     <style>
-        body { background-color: #0f1117; color: #e2e8f0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background: #0f1117; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            color: #e2e8f0; 
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        
+        .setup-container {
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.5s;
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg,#10b981,#34d399);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #fff;
+        }
+        
+        .logo-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 4px;
+        }
+        
+        .logo-subtitle {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .setup-card {
+            background: #141820;
+            border: 1px solid #1e2430;
+            border-radius: 16px;
+            padding: 32px;
+        }
+        
+        .setup-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 24px;
+        }
+        
+        .field-label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 6px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .field-input {
+            width: 100%;
+            background: #0f1117;
+            border: 1px solid #1e2430;
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #e2e8f0;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+        .field-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
+        }
+        .field-input::placeholder { color: #334155; }
+        
+        .btn-success {
+            width: 100%;
+            background: linear-gradient(135deg,#10b981,#059669);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .btn-success:hover { opacity: 0.88; }
+        
+        .error-message {
+            background: #ef444422;
+            border: 1px solid #ef444455;
+            color: #ef4444;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        
+        .success-message {
+            background: #10b98122;
+            border: 1px solid #10b98155;
+            color: #34d399;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-white">Sistem Kurulumu</h1>
-            <p class="text-gray-500 text-sm mt-1">Ilk yoneticiyi olusturun</p>
+<body>
+    <div class="setup-container">
+        <!-- Logo -->
+        <div class="logo-section">
+            <div class="logo-icon">⚙️</div>
+            <div class="logo-title">SİSTEM KURULUMU</div>
+            <div class="logo-subtitle">İlk yöneticiyi oluşturun</div>
         </div>
         
-        <div class="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl">
+        <!-- Setup Form -->
+        <div class="setup-card">
+            <div class="setup-title">Yönetici Hesabı</div>
+            
             <?php if ($success): ?>
-            <div class="bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg mb-6 text-sm">
-                <?php echo $success; ?>
-            </div>
+            <div class="success-message"><?php echo $success; ?></div>
             <?php elseif ($error): ?>
-            <div class="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
-                <?php echo $error; ?>
-            </div>
+            <div class="error-message"><?php echo $error; ?></div>
             <?php endif; ?>
             
             <?php if (!$success): ?>
             <form method="POST" action="">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Ad Soyad *</label>
-                        <input type="text" name="full_name" required
-                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                            placeholder="Orn: Ahmet Yilmaz">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Kullanici Adi *</label>
-                        <input type="text" name="username" required
-                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                            placeholder="Orn: admin">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Sifre *</label>
-                        <input type="password" name="password" required
-                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                            placeholder="******">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Sifre Tekrar *</label>
-                        <input type="password" name="password_confirm" required
-                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                            placeholder="******">
-                    </div>
-                </div>
+                <label class="field-label">Ad Soyad *</label>
+                <input type="text" name="full_name" required class="field-input" placeholder="Örn: Ahmet Yılmaz">
                 
-                <button type="submit" 
-                    class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">
-                    Kurulumu Tamamla
-                </button>
+                <label class="field-label">Kullanıcı Adı *</label>
+                <input type="text" name="username" required class="field-input" placeholder="Örn: admin">
+                
+                <label class="field-label">E-posta</label>
+                <input type="email" name="email" class="field-input" placeholder="ornek@email.com">
+                
+                <label class="field-label">Şifre *</label>
+                <input type="password" name="password" required class="field-input" placeholder="En az 6 karakter">
+                
+                <label class="field-label">Şifre Tekrar *</label>
+                <input type="password" name="password_confirm" required class="field-input" placeholder="Şifrenizi tekrar girin">
+                
+                <button type="submit" class="btn-success">Kurulumu Tamamla</button>
             </form>
             <?php endif; ?>
         </div>

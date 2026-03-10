@@ -20,135 +20,132 @@ $kurlar = getDovizKurlari();
 $secili = $_GET['secili'] ?? [];
 ?>
 
-<div class="animate-fade-in">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-white">💰 Fiyat Tablosu</h1>
-            <p class="text-gray-500 text-sm mt-1">
-                Fiyat bilgisi girilmis tum hammaddeler - <?php echo count($hammaddeler); ?> kayit
-            </p>
-        </div>
-        
-        <div class="flex gap-2">
-            <button onclick="tumunuSec()" class="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/50 rounded-lg text-sm font-bold transition-colors">
-                <i class="fas fa-check-square mr-2"></i>Tumunu Sec
-            </button>
-            <button onclick="secimiTemizle()" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-gray-400 rounded-lg text-sm font-bold transition-colors">
-                <i class="fas fa-times mr-2"></i>Secimi Temizle
-            </button>
-        </div>
+<div style="margin-bottom:20px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
+    <div>
+        <div style="font-size:18px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">💰 Fiyat Tablosu</div>
+        <div style="font-size:13px;color:#64748b;">Fiyat bilgisi girilmis tum hammaddeler - <?php echo count($hammaddeler); ?> kayit</div>
     </div>
     
-    <?php if (empty($hammaddeler)): ?>
-    <div class="bg-dark-800 border border-dark-700 rounded-xl p-12 text-center">
-        <div class="text-6xl mb-4">💵</div>
-        <div class="text-xl text-gray-400 font-bold mb-2">Fiyat Bilgisi Yok</div>
-        <div class="text-gray-500 text-sm">Henüz fiyat bilgisi girilmis hammadde bulunmuyor.</div>
+    <div style="display:flex;gap:8px;">
+        <button onclick="tumunuSec()" style="padding:8px 16px;background:#1a1535;border:1px solid #a78bfa55;border-radius:8px;color:#a78bfa;font-size:12px;font-weight:700;cursor:pointer;">
+            Tumunu Sec
+        </button>
+        <button onclick="secimiTemizle()" style="padding:8px 16px;background:#141820;border:1px solid #1e2430;border-radius:8px;color:#64748b;font-size:12px;font-weight:700;cursor:pointer;">
+            Secimi Temizle
+        </button>
     </div>
-    <?php else: ?>
-    <div class="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full data-table text-sm">
-                <thead>
-                    <tr>
-                        <th class="w-10">
-                            <input type="checkbox" id="tumunu_sec_checkbox" onchange="toggleTumunu(this)" class="rounded bg-dark-700 border-dark-600">
-                        </th>
-                        <th>Hammadde</th>
-                        <th>Stok Kodu</th>
-                        <th>Tedarikci</th>
-                        <th>Mensei</th>
-                        <th>Paketleme</th>
-                        <th>Teslim Sekli</th>
-                        <th>Para Birimi</th>
-                        <th>Maliyet Turu</th>
-                        <th>Birim Fiyat</th>
-                        <th>Maliyet</th>
-                        <th>Varis Maliyeti</th>
-                        <th>Toplam Stok Bedeli</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($hammaddeler as $h): 
-                        $varisMaliyet = hesaplaVarisMaliyeti($h, $kurlar);
-                        $maliyet = hesaplaMaliyet($h, $kurlar);
-                        $birimMiktar = $h['fiyat_birimi'] === 'ton' ? ($h['stok_miktari'] ?? 0) / 1000 : ($h['stok_miktari'] ?? 0);
-                        $stokBedeli = $varisMaliyet * $birimMiktar;
-                    ?>
-                    <tr class="group <?php echo in_array($h['id'], $secili) ? 'bg-purple-500/10' : ''; ?>" data-id="<?php echo $h['id']; ?>">
-                        <td>
-                            <input type="checkbox" class="hammadde-checkbox rounded bg-dark-700 border-dark-600" 
-                                   value="<?php echo $h['id']; ?>" 
-                                   <?php echo in_array($h['id'], $secili) ? 'checked' : ''; ?>
-                                   onchange="toggleSecim(<?php echo $h['id']; ?>, this)">
-                        </td>
-                        <td>
-                            <div class="font-bold text-white max-w-xs truncate" title="<?php echo $h['hammadde_ismi']; ?>">
-                                <?php echo $h['hammadde_ismi']; ?>
-                            </div>
-                        </td>
-                        <td class="font-mono text-gray-400"><?php echo $h['stok_kodu'] ?: '-'; ?></td>
-                        <td class="text-gray-400"><?php echo $h['tedarikci'] ?: '-'; ?></td>
-                        <td class="text-gray-400"><?php echo $h['ulke_adi'] ?: '-'; ?></td>
-                        <td>
-                            <?php if ($h['paketleme_adi']): ?>
-                            <span class="bg-dark-700 px-2 py-0.5 rounded text-xs text-gray-400"><?php echo $h['paketleme_adi']; ?></span>
-                            <?php else: ?>-<?php endif; ?>
-                        </td>
-                        <td>
-                            <span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs font-bold"><?php echo $h['teslimat_sekli_kodu']; ?></span>
-                        </td>
-                        <td class="font-bold text-gray-400"><?php echo $h['para_birimi_kodu']; ?></td>
-                        <td>
-                            <span class="px-2 py-0.5 rounded text-xs font-bold <?php echo $h['maliyet_turu'] === 'G' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'; ?>">
-                                <?php echo $h['maliyet_turu'] === 'G' ? 'G' : 'T'; ?>
-                            </span>
-                        </td>
-                        <td class="font-bold text-blue-400"><?php echo formatNumber($h['birim_fiyat'], 2); ?></td>
-                        <td class="text-purple-400">
-                            <?php if ($h['maliyet_tipi'] === 'yuzde'): ?>
-                                %<?php echo $h['maliyet_deger']; ?>
-                            <?php else: ?>
-                                <?php echo formatNumber($maliyet, 2); ?>
-                            <?php endif; ?>
-                        </td>
-                        <td class="font-bold text-green-400"><?php echo formatNumber($varisMaliyet, 2); ?></td>
-                        <td class="font-bold text-amber-400">
-                            <?php echo $stokBedeli > 0 ? formatNumber($stokBedeli, 0) . ' ' . $h['para_birimi_kodu'] : '-'; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Alt Toplam -->
-        <div class="bg-dark-900 border-t border-dark-700 p-4">
-            <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Toplam Stok Bedeli</div>
-            <div class="flex flex-wrap gap-4">
-                <?php
-                $pbToplam = [];
-                foreach ($hammaddeler as $h) {
-                    $varisMaliyet = hesaplaVarisMaliyeti($h, $kurlar);
-                    $birimMiktar = $h['fiyat_birimi'] === 'ton' ? ($h['stok_miktari'] ?? 0) / 1000 : ($h['stok_miktari'] ?? 0);
-                    $pb = $h['para_birimi_kodu'];
-                    if (!isset($pbToplam[$pb])) $pbToplam[$pb] = 0;
-                    $pbToplam[$pb] += $varisMaliyet * $birimMiktar;
-                }
-                
-                foreach ($pbToplam as $pb => $toplam):
-                    if ($toplam > 0):
-                ?>
-                <div class="bg-dark-800 border border-dark-700 rounded-lg px-4 py-2">
-                    <span class="text-amber-400 font-bold text-lg"><?php echo formatNumber($toplam, 0); ?></span>
-                    <span class="text-gray-500 text-sm ml-1"><?php echo $pb; ?></span>
-                </div>
-                <?php endif; endforeach; ?>
-            </div>
-        </div>
-    </div>
-    <?php endif; ?>
 </div>
+
+<?php if (empty($hammaddeler)): ?>
+<div style="background:#141820;border:1px solid #1e2430;border-radius:12px;padding:48px;text-align:center;">
+    <div style="font-size:48;margin-bottom:16px;">💵</div>
+    <div style="font-size:16px;color:#64748b;font-weight:700;margin-bottom:8px;">Fiyat Bilgisi Yok</div>
+    <div style="font-size:13px;color:#475569;">Henüz fiyat bilgisi girilmis hammadde bulunmuyor.</div>
+</div>
+<?php else: ?>
+<div style="background:#141820;border:1px solid #1e2430;border-radius:12px;overflow:hidden;">
+    <div style="overflow-x:auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:40px;">
+                        <input type="checkbox" id="tumunu_sec_checkbox" onchange="toggleTumunu(this)" style="accent-color:#3b82f6;">
+                    </th>
+                    <th>Hammadde</th>
+                    <th>Stok Kodu</th>
+                    <th>Tedarikci</th>
+                    <th>Mensei</th>
+                    <th>Paketleme</th>
+                    <th>Teslim Sekli</th>
+                    <th>Para Birimi</th>
+                    <th>Maliyet Turu</th>
+                    <th>Birim Fiyat</th>
+                    <th>Maliyet</th>
+                    <th>Varis Maliyeti</th>
+                    <th>Toplam Stok Bedeli</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($hammaddeler as $h): 
+                    $varisMaliyet = hesaplaVarisMaliyeti($h, $kurlar);
+                    $maliyet = hesaplaMaliyet($h, $kurlar);
+                    $birimMiktar = $h['fiyat_birimi'] === 'ton' ? ($h['stok_miktari'] ?? 0) / 1000 : ($h['stok_miktari'] ?? 0);
+                    $stokBedeli = $varisMaliyet * $birimMiktar;
+                ?>
+                <tr data-id="<?php echo $h['id']; ?>" style="<?php echo in_array($h['id'], $secili) ? 'background:#a78bfa0a;' : ''; ?>">
+                    <td>
+                        <input type="checkbox" class="hammadde-checkbox" value="<?php echo $h['id']; ?>" 
+                               <?php echo in_array($h['id'], $secili) ? 'checked' : ''; ?>
+                               onchange="toggleSecim(<?php echo $h['id']; ?>, this)" style="accent-color:#3b82f6;">
+                    </td>
+                    <td>
+                        <div style="font-weight:700;color:#f1f5f9;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?php echo $h['hammadde_ismi']; ?>">
+                            <?php echo $h['hammadde_ismi']; ?>
+                        </div>
+                    </td>
+                    <td style="font-family:monospace;color:#94a3b8;"><?php echo $h['stok_kodu'] ?: '-'; ?></td>
+                    <td style="color:#94a3b8;"><?php echo $h['tedarikci'] ?: '-'; ?></td>
+                    <td style="color:#94a3b8;"><?php echo $h['ulke_adi'] ?: '-'; ?></td>
+                    <td>
+                        <?php if ($h['paketleme_adi']): ?>
+                        <span style="background:#1e2430;padding:2px 8px;border-radius:4px;font-size:11px;color:#94a3b8;"><?php echo $h['paketleme_adi']; ?></span>
+                        <?php else: ?>-<?php endif; ?>
+                    </td>
+                    <td>
+                        <span style="background:#3b82f622;color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;"><?php echo $h['teslimat_sekli_kodu']; ?></span>
+                    </td>
+                    <td style="font-weight:700;color:#94a3b8;"><?php echo $h['para_birimi_kodu']; ?></td>
+                    <td>
+                        <?php if ($h['maliyet_turu'] === 'G'): ?>
+                        <span style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background-color:rgba(16,185,129,0.13);color:#34d399;">G</span>
+                        <?php else: ?>
+                        <span style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background-color:rgba(245,158,11,0.13);color:#fbbf24;">T</span>
+                        <?php endif; ?>
+                    </td>
+                    <td style="font-weight:700;color:#60a5fa;"><?php echo number_format($h['birim_fiyat'], 2, ',', '.'); ?></td>
+                    <td style="color:#a78bfa;">
+                        <?php if ($h['maliyet_tipi'] === 'yuzde'): ?>
+                            %<?php echo $h['maliyet_deger']; ?>
+                        <?php else: ?>
+                            <?php echo number_format($maliyet, 2, ',', '.'); ?>
+                        <?php endif; ?>
+                    </td>
+                    <td style="font-weight:700;color:#34d399;"><?php echo number_format($varisMaliyet, 2, ',', '.'); ?></td>
+                    <td style="font-weight:700;color:#fbbf24;">
+                        <?php echo $stokBedeli > 0 ? number_format($stokBedeli, 0, ',', '.') . ' ' . $h['para_birimi_kodu'] : '-'; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Alt Toplam -->
+    <div style="background:#0f1117;border-top:1px solid #1e2430;padding:16px;">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">Toplam Stok Bedeli</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+            <?php
+            $pbToplam = [];
+            foreach ($hammaddeler as $h) {
+                $varisMaliyet = hesaplaVarisMaliyeti($h, $kurlar);
+                $birimMiktar = $h['fiyat_birimi'] === 'ton' ? ($h['stok_miktari'] ?? 0) / 1000 : ($h['stok_miktari'] ?? 0);
+                $pb = $h['para_birimi_kodu'];
+                if (!isset($pbToplam[$pb])) $pbToplam[$pb] = 0;
+                $pbToplam[$pb] += $varisMaliyet * $birimMiktar;
+            }
+            
+            foreach ($pbToplam as $pb => $toplam):
+                if ($toplam > 0):
+            ?>
+            <div style="background:#141820;border:1px solid #1e2430;border-radius:8px;padding:8px 16px;">
+                <span style="color:#fbbf24;font-weight:700;font-size:16px;"><?php echo number_format($toplam, 0, ',', '.'); ?></span>
+                <span style="color:#64748b;font-size:12px;margin-left:4px;"><?php echo $pb; ?></span>
+            </div>
+            <?php endif; endforeach; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <script>
 let seciliIds = [];
@@ -165,11 +162,7 @@ function toggleSecim(id, checkbox) {
 function updateRowStyle(id, selected) {
     const row = document.querySelector('tr[data-id="' + id + '"]');
     if (row) {
-        if (selected) {
-            row.classList.add('bg-purple-500/10');
-        } else {
-            row.classList.remove('bg-purple-500/10');
-        }
+        row.style.background = selected ? '#a78bfa0a' : 'transparent';
     }
 }
 

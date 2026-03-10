@@ -20,252 +20,260 @@ $durum = getStokDurum($hammadde);
 $kurlar = getDovizKurlari();
 
 $pageTitle = $hammadde['hammadde_ismi'];
+
+$aylar = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+$yillar = [2023, 2024, 2025, 2026];
 ?>
 
-<div class="animate-fade-in">
-    <!-- Ust Bilgi -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <div class="flex items-center gap-3 mb-2">
-                <span class="px-2 py-1 rounded text-xs font-bold <?php echo $hammadde['sk'] == 'S' ? 'bg-blue-500/20 text-blue-400' : ($hammadde['sk'] == 'K' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'); ?>">
-                    <?php echo $hammadde['sk']; ?> - <?php echo $hammadde['sk'] == 'S' ? 'Standart' : ($hammadde['sk'] == 'K' ? 'Kapali' : 'Alternatif'); ?>
-                </span>
-                <span class="bg-dark-700 px-2 py-1 rounded text-xs text-gray-400"><?php echo $hammadde['tur_adi'] ?: '-'; ?></span>
-            </div>
-            <h1 class="text-2xl font-bold text-white"><?php echo $hammadde['hammadde_ismi']; ?></h1>
-            <p class="text-gray-500 text-sm mt-1">
-                Stok Kodu: <span class="font-mono text-gray-400"><?php echo $hammadde['stok_kodu'] ?: '-'; ?></span> | 
-                Urun Kodu: <span class="font-mono text-gray-400"><?php echo $hammadde['urun_kodu'] ?: '-'; ?></span>
-            </p>
+<!-- Ust Bilgi -->
+<div style="margin-bottom:20px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px;">
+    <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <?php if ($hammadde['sk'] == 'S'): ?>
+            <span style="background:#3b82f622;color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">S - Standart</span>
+            <?php elseif ($hammadde['sk'] == 'K'): ?>
+            <span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">K - Kapali</span>
+            <?php else: ?>
+            <span style="background:#eab30822;color:#eab308;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">A - Alternatif</span>
+            <?php endif; ?>
+            <span style="background:#1e2430;padding:2px 8px;border-radius:4px;font-size:11px;color:#94a3b8;"><?php echo $hammadde['tur_adi'] ?: '-'; ?></span>
         </div>
-        
-        <div class="flex gap-2">
-            <a href="index.php" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-gray-400 rounded-lg text-sm font-semibold transition-colors">
-                <i class="fas fa-arrow-left mr-2"></i>Listeye Don
-            </a>
-            <a href="hammadde-form.php?id=<?php echo $id; ?>" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/50 rounded-lg text-sm font-semibold transition-colors">
-                <i class="fas fa-edit mr-2"></i>Duzenle
-            </a>
+        <div style="font-size:20px;font-weight:700;color:#f1f5f9;"><?php echo $hammadde['hammadde_ismi']; ?></div>
+        <div style="font-size:13px;color:#64748b;margin-top:4px;">
+            Stok Kodu: <span style="font-family:monospace;color:#94a3b8;"><?php echo $hammadde['stok_kodu'] ?: '-'; ?></span> | 
+            Urun Kodu: <span style="font-family:monospace;color:#94a3b8;"><?php echo $hammadde['urun_kodu'] ?: '-'; ?></span>
         </div>
     </div>
     
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Sol Kolon - Temel Bilgiler -->
-        <div class="space-y-6">
-            <!-- Stok Durumu -->
-            <div class="bg-dark-800 border border-dark-700 rounded-xl p-6">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">📊 Stok Durumu</h2>
-                
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="text-center p-4 bg-dark-900 rounded-lg">
-                        <div class="text-xs text-gray-500 uppercase mb-1">Mevcut Stok</div>
-                        <div class="text-2xl font-bold" style="color: <?php echo $durum['renk']; ?>">
-                            <?php echo formatNumber($hammadde['stok_miktari'], 0); ?>
-                            <span class="text-sm font-normal">kg</span>
-                        </div>
-                    </div>
-                    <div class="text-center p-4 bg-dark-900 rounded-lg">
-                        <div class="text-xs text-gray-500 uppercase mb-1">Kalan Gun</div>
-                        <div class="text-2xl font-bold" style="color: <?php echo $durum['renk']; ?>">
-                            <?php echo $durum['kalan_gun'] !== null ? $durum['kalan_gun'] : '-'; ?>
-                            <span class="text-sm font-normal">gun</span>
-                        </div>
+    <div style="display:flex;gap:8px;">
+        <a href="index.php" class="btn-secondary">← Listeye Don</a>
+        <a href="hammadde-form.php?id=<?php echo $id; ?>" class="btn-primary">✏️ Duzenle</a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+    <!-- Sol Kolon - Temel Bilgiler -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+        <!-- Stok Durumu -->
+        <div class="card">
+            <div class="section-title">📊 Stok Durumu</div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                <div style="text-align:center;padding:16px;background:#0f1117;border-radius:8px;">
+                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Mevcut Stok</div>
+                    <div style="font-size:24px;font-weight:700;color:<?php echo $durum['renk']; ?>">
+                        <?php echo number_format($hammadde['stok_miktari'], 0, ',', '.'); ?>
+                        <span style="font-size:13px;font-weight:400;">kg</span>
                     </div>
                 </div>
-                
-                <div class="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Stok/Termin Orani: %<?php echo round(($durum['oran'] ?? 0) * 100); ?></span>
-                    <span>Durum: <span style="color: <?php echo $durum['renk']; ?>"><?php echo $durum['label'] ?: 'RAHAT'; ?></span></span>
-                </div>
-                <div class="h-2 bg-dark-900 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all duration-500" 
-                         style="width: <?php echo min(100, ($durum['oran'] ?? 0) * 50); ?>%; background-color: <?php echo $durum['renk']; ?>">
-                    </div>
-                </div>
-                
-                <div class="mt-4 pt-4 border-t border-dark-700 grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span class="text-gray-500">Optimum:</span>
-                        <span class="text-white ml-1"><?php echo formatNumber($hammadde['hesaplanan_optimum'], 0); ?> kg</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-500">Gunluk Tuketim:</span>
-                        <span class="text-white ml-1"><?php echo formatNumber($durum['gunluk_tuketim'], 1); ?> kg</span>
+                <div style="text-align:center;padding:16px;background:#0f1117;border-radius:8px;">
+                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Kalan Gun</div>
+                    <div style="font-size:24px;font-weight:700;color:<?php echo $durum['renk']; ?>">
+                        <?php echo $durum['kalan_gun'] !== null ? $durum['kalan_gun'] : '-'; ?>
+                        <span style="font-size:13px;font-weight:400;">gun</span>
                     </div>
                 </div>
             </div>
             
-            <!-- Tedarikci Bilgileri -->
-            <div class="bg-dark-800 border border-dark-700 rounded-xl p-6">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">🏢 Tedarikci Bilgileri</h2>
-                
-                <div class="space-y-3">
-                    <div>
-                        <span class="text-xs text-gray-500 block">Tedarikci</span>
-                        <span class="text-white"><?php echo $hammadde['tedarikci'] ?: '-'; ?></span>
-                    </div>
-                    <div>
-                        <span class="text-xs text-gray-500 block">Mensei Ulke</span>
-                        <span class="text-white"><?php echo $hammadde['ulke_adi'] ?: '-'; ?></span>
-                    </div>
-                    <div>
-                        <span class="text-xs text-gray-500 block">Paketleme</span>
-                        <span class="text-white"><?php echo $hammadde['paketleme_adi'] ?: '-'; ?></span>
-                    </div>
-                </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:4px;">
+                <span>Stok/Termin Orani: %<?php echo round(($durum['oran'] ?? 0) * 100); ?></span>
+                <span>Durum: <span style="color:<?php echo $durum['renk']; ?>"><?php echo $durum['label'] ?: 'RAHAT'; ?></span></span>
+            </div>
+            <div style="height:6px;background:#0f1117;border-radius:3px;overflow:hidden;">
+                <div style="height:100%;border-radius:3px;width:<?php echo min(100, ($durum['oran'] ?? 0) * 50); ?>%;background-color:<?php echo $durum['renk']; ?>"></div>
             </div>
             
-            <!-- Termin Sureleri -->
-            <div class="bg-dark-800 border border-dark-700 rounded-xl p-6">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">⏱️ Termin Sureleri</h2>
-                
-                <?php
-                $terminToplam = ($hammadde['akreditif_gun'] ?? 0) + ($hammadde['satici_tedarik_gun'] ?? 0) + ($hammadde['yol_gun'] ?? 0) + ($hammadde['depo_kabul_gun'] ?? 0);
-                ?>
-                
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500"><span class="text-blue-400">●</span> Akreditif Acma</span>
-                        <span class="font-bold text-white"><?php echo $hammadde['akreditif_gun'] ?: 0; ?> gun</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500"><span class="text-purple-400">●</span> Satici Tedarik</span>
-                        <span class="font-bold text-white"><?php echo $hammadde['satici_tedarik_gun'] ?: 0; ?> gun</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500"><span class="text-green-400">●</span> Yol (Nakliye)</span>
-                        <span class="font-bold text-white"><?php echo $hammadde['yol_gun'] ?: 0; ?> gun</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500"><span class="text-yellow-400">●</span> Depo Kabul</span>
-                        <span class="font-bold text-white"><?php echo $hammadde['depo_kabul_gun'] ?: 0; ?> gun</span>
-                    </div>
-                    <div class="pt-2 mt-2 border-t border-dark-700 flex justify-between items-center">
-                        <span class="text-xs font-bold text-gray-400">TOPLAM</span>
-                        <span class="font-bold text-yellow-400 text-lg"><?php echo $terminToplam; ?> gun</span>
-                    </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid #1e2430;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+                <div>
+                    <span style="color:#64748b;">Optimum:</span>
+                    <span style="color:#f1f5f9;margin-left:4px;"><?php echo number_format($hammadde['hesaplanan_optimum'], 0, ',', '.'); ?> kg</span>
+                </div>
+                <div>
+                    <span style="color:#64748b;">Gunluk Tuketim:</span>
+                    <span style="color:#f1f5f9;margin-left:4px;"><?php echo number_format($durum['gunluk_tuketim'], 1, ',', '.'); ?> kg</span>
                 </div>
             </div>
         </div>
         
-        <!-- Orta Kolon - Fiyat Bilgileri -->
-        <div class="space-y-6">
-            <!-- Fiyat Bilgileri -->
-            <div class="bg-dark-800 border border-dark-700 rounded-xl p-6">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">💰 Fiyat Bilgileri</h2>
-                
-                <?php if ($hammadde['birim_fiyat'] > 0): 
-                    $varisMaliyet = hesaplaVarisMaliyeti($hammadde, $kurlar);
-                    $maliyet = hesaplaMaliyet($hammadde, $kurlar);
-                ?>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
-                        <span class="text-gray-500">Birim Fiyat</span>
-                        <span class="font-bold text-blue-400"><?php echo formatNumber($hammadde['birim_fiyat'], 2); ?> <?php echo $hammadde['para_birimi_kodu']; ?></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
-                        <span class="text-gray-500">Fiyat Birimi</span>
-                        <span class="font-bold text-white">/<?php echo $hammadde['fiyat_birimi']; ?></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
-                        <span class="text-gray-500">Teslim Sekli</span>
-                        <span class="font-bold text-blue-400"><?php echo $hammadde['teslimat_sekli_kodu']; ?></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
-                        <span class="text-gray-500">Maliyet Turu</span>
-                        <span class="font-bold <?php echo $hammadde['maliyet_turu'] === 'G' ? 'text-green-400' : 'text-amber-400'; ?>">
-                            <?php echo $hammadde['maliyet_turu'] === 'G' ? 'G - Gerceklesen' : 'T - Tahmini'; ?>
-                        </span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
-                        <span class="text-gray-500">Nakliye/Maliyet</span>
-                        <span class="text-purple-400">
-                            <?php if ($hammadde['maliyet_tipi'] === 'yuzde'): ?>
-                                %<?php echo $hammadde['maliyet_deger']; ?>
-                            <?php else: ?>
-                                <?php echo formatNumber($maliyet, 2); ?> <?php echo $hammadde['para_birimi_kodu']; ?>
-                            <?php endif; ?>
-                        </span>
-                    </div>
-                    <div class="flex justify-between items-center p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                        <span class="text-gray-400">Birim Varis Maliyeti</span>
-                        <span class="font-bold text-green-400 text-xl"><?php echo formatNumber($varisMaliyet, 2); ?> <?php echo $hammadde['para_birimi_kodu']; ?>/<?php echo $hammadde['fiyat_birimi']; ?></span>
-                    </div>
-                </div>
-                <?php else: ?>
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-tag text-4xl mb-2 opacity-50"></i>
-                    <p>Fiyat bilgisi girilmemis</p>
-                </div>
-                <?php endif; ?>
-            </div>
+        <!-- Tedarikci Bilgileri -->
+        <div class="card">
+            <div class="section-title">🏢 Tedarikci Bilgileri</div>
             
-            <!-- Fiyat Gecmisi -->
-            <?php if (!empty($fiyatGecmisi)): ?>
-            <div class="bg-dark-800 border border-dark-700 rounded-xl p-6">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">📈 Fiyat Gecmisi</h2>
-                
-                <div class="space-y-2 max-h-60 overflow-y-auto">
-                    <?php foreach (array_slice($fiyatGecmisi, 0, 10) as $fg): ?>
-                    <div class="flex justify-between items-center p-2 bg-dark-900 rounded text-sm">
-                        <span class="text-gray-500"><?php echo formatDate($fg['kayit_tarihi']); ?></span>
-                        <span class="font-bold text-blue-400"><?php echo formatNumber($fg['birim_fiyat'], 2); ?> <?php echo $fg['sembol']; ?></span>
-                    </div>
-                    <?php endforeach; ?>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                    <span style="font-size:11px;color:#64748b;display:block;">Tedarikci</span>
+                    <span style="color:#f1f5f9;"><?php echo $hammadde['tedarikci'] ?: '-'; ?></span>
                 </div>
+                <div>
+                    <span style="font-size:11px;color:#64748b;display:block;">Mensei Ulke</span>
+                    <span style="color:#f1f5f9;"><?php echo $hammadde['ulke_adi'] ?: '-'; ?></span>
+                </div>
+                <div>
+                    <span style="font-size:11px;color:#64748b;display:block;">Paketleme</span>
+                    <span style="color:#f1f5f9;"><?php echo $hammadde['paketleme_adi'] ?: '-'; ?></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Termin Sureleri -->
+        <div class="card">
+            <div class="section-title">⏱️ Termin Sureleri</div>
+            
+            <?php
+            $terminToplam = ($hammadde['akreditif_gun'] ?? 0) + ($hammadde['satici_tedarik_gun'] ?? 0) + ($hammadde['yol_gun'] ?? 0) + ($hammadde['depo_kabul_gun'] ?? 0);
+            ?>
+            
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:#64748b;"><span style="color:#3b82f6;">●</span> Akreditif Acma</span>
+                    <span style="font-weight:700;color:#f1f5f9;"><?php echo $hammadde['akreditif_gun'] ?: 0; ?> gun</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:#64748b;"><span style="color:#8b5cf6;">●</span> Satici Tedarik</span>
+                    <span style="font-weight:700;color:#f1f5f9;"><?php echo $hammadde['satici_tedarik_gun'] ?: 0; ?> gun</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:#64748b;"><span style="color:#10b981;">●</span> Yol (Nakliye)</span>
+                    <span style="font-weight:700;color:#f1f5f9;"><?php echo $hammadde['yol_gun'] ?: 0; ?> gun</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:#64748b;"><span style="color:#f59e0b;">●</span> Depo Kabul</span>
+                    <span style="font-weight:700;color:#f1f5f9;"><?php echo $hammadde['depo_kabul_gun'] ?: 0; ?> gun</span>
+                </div>
+                <div style="padding-top:8px;margin-top:8px;border-top:1px solid #1e2430;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:11px;font-weight:700;color:#64748b;">TOPLAM</span>
+                    <span style="font-weight:700;color:#fbbf24;font-size:18px;"><?php echo $terminToplam; ?> gun</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Orta Kolon - Fiyat Bilgileri -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+        <!-- Fiyat Bilgileri -->
+        <div class="card">
+            <div class="section-title">💰 Fiyat Bilgileri</div>
+            
+            <?php if ($hammadde['birim_fiyat'] > 0): 
+                $varisMaliyet = hesaplaVarisMaliyeti($hammadde, $kurlar);
+                $maliyet = hesaplaMaliyet($hammadde, $kurlar);
+            ?>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0f1117;border-radius:6px;">
+                    <span style="color:#64748b;">Birim Fiyat</span>
+                    <span style="font-weight:700;color:#60a5fa;"><?php echo number_format($hammadde['birim_fiyat'], 2, ',', '.'); ?> <?php echo $hammadde['para_birimi_kodu']; ?></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0f1117;border-radius:6px;">
+                    <span style="color:#64748b;">Fiyat Birimi</span>
+                    <span style="font-weight:700;color:#f1f5f9;">/<?php echo $hammadde['fiyat_birimi']; ?></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0f1117;border-radius:6px;">
+                    <span style="color:#64748b;">Teslim Sekli</span>
+                    <span style="font-weight:700;color:#60a5fa;"><?php echo $hammadde['teslimat_sekli_kodu']; ?></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0f1117;border-radius:6px;">
+                    <span style="color:#64748b;">Maliyet Turu</span>
+                    <span style="font-weight:700;<?php echo $hammadde['maliyet_turu'] === 'G' ? 'color:#34d399;' : 'color:#fbbf24;' ?>">
+                        <?php echo $hammadde['maliyet_turu'] === 'G' ? 'G - Gerceklesen' : 'T - Tahmini'; ?>
+                    </span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0f1117;border-radius:6px;">
+                    <span style="color:#64748b;">Nakliye/Maliyet</span>
+                    <span style="color:#a78bfa;">
+                        <?php if ($hammadde['maliyet_tipi'] === 'yuzde'): ?>
+                            %<?php echo $hammadde['maliyet_deger']; ?>
+                        <?php else: ?>
+                            <?php echo number_format($maliyet, 2, ',', '.'); ?> <?php echo $hammadde['para_birimi_kodu']; ?>
+                        <?php endif; ?>
+                    </span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#10b9810a;border:1px solid #10b98144;border-radius:6px;">
+                    <span style="color:#94a3b8;">Birim Varis Maliyeti</span>
+                    <span style="font-weight:700;color:#34d399;font-size:18px;"><?php echo number_format($varisMaliyet, 2, ',', '.'); ?> <?php echo $hammadde['para_birimi_kodu']; ?>/<?php echo $hammadde['fiyat_birimi']; ?></span>
+                </div>
+            </div>
+            <?php else: ?>
+            <div style="text-align:center;padding:32px;color:#64748b;">
+                <div style="font-size:32px;margin-bottom:8px;opacity:0.5;">🏷️</div>
+                <div>Fiyat bilgisi girilmemis</div>
             </div>
             <?php endif; ?>
         </div>
         
-        <!-- Sag Kolon - Tuketim Verileri -->
-        <div class="lg:col-span-1">
-            <div class="bg-dark-800 border border-dark-700 rounded-xl p-6">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">📅 Tuketim Verileri</h2>
-                
-                <?php foreach (YILLAR as $yil): 
-                    $yilRenkler = [2023 => 'blue', 2024 => 'purple', 2025 => 'green', 2026 => 'amber', 2027 => 'red'];
-                    $renk = $yilRenkler[$yil] ?? 'gray';
-                    
-                    $yilVeriler = [];
-                    $toplam = 0;
-                    $sayac = 0;
-                    foreach (AYLAR as $ayNo => $ayAd) {
-                        $deger = $tuketimVerileri[$yil][$ayNo] ?? null;
-                        $yilVeriler[$ayNo] = $deger;
-                        if ($deger !== null) {
-                            $toplam += $deger;
-                            $sayac++;
-                        }
-                    }
-                    $ortalama = $sayac > 0 ? $toplam / $sayac : 0;
-                ?>
-                <div class="mb-6 last:mb-0">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="w-2 h-2 rounded-full bg-<?php echo $renk; ?>-400"></span>
-                        <span class="font-bold text-<?php echo $renk; ?>-400"><?php echo $yil; ?></span>
-                        <span class="text-xs text-gray-500 ml-auto">Ort: <?php echo formatNumber($ortalama, 0); ?> kg</span>
-                    </div>
-                    
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                        <?php foreach (AYLAR as $ayNo => $ayAd): 
-                            $deger = $yilVeriler[$ayNo];
-                        ?>
-                        <div class="bg-dark-900 rounded p-2 text-center">
-                            <div class="text-gray-500 text-[10px] mb-1"><?php echo substr($ayAd, 0, 3); ?></div>
-                            <div class="font-mono <?php echo $deger !== null ? 'text-white' : 'text-gray-700'; ?>">
-                                <?php echo $deger !== null ? formatNumber($deger, 0) : '-'; ?>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                    
-                    <div class="mt-2 pt-2 border-t border-dark-700 flex justify-between text-xs">
-                        <span class="text-gray-500">Toplam: <span class="text-<?php echo $renk; ?>-400 font-bold"><?php echo formatNumber($toplam, 0); ?></span> kg</span>
-                        <span class="text-gray-500">Girilen: <?php echo $sayac; ?>/12 ay</span>
-                    </div>
+        <!-- Fiyat Gecmisi -->
+        <?php if (!empty($fiyatGecmisi)): ?>
+        <div class="card">
+            <div class="section-title">📈 Fiyat Gecmisi</div>
+            
+            <div style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;">
+                <?php foreach (array_slice($fiyatGecmisi, 0, 10) as $fg): ?>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#0f1117;border-radius:6px;font-size:13px;">
+                    <span style="color:#64748b;"><?php echo date('d.m.Y', strtotime($fg['kayit_tarihi'])); ?></span>
+                    <span style="font-weight:700;color:#60a5fa;"><?php echo number_format($fg['birim_fiyat'], 2, ',', '.'); ?> <?php echo $fg['sembol']; ?></span>
                 </div>
                 <?php endforeach; ?>
             </div>
+        </div>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Sag Kolon - Tuketim Verileri -->
+    <div>
+        <div class="card">
+            <div class="section-title">📅 Tuketim Verileri</div>
+            
+            <?php 
+            $yilRenkler = [
+                2023 => ['border' => '#3b82f6', 'text' => '#60a5fa'],
+                2024 => ['border' => '#8b5cf6', 'text' => '#a78bfa'],
+                2025 => ['border' => '#10b981', 'text' => '#34d399'],
+                2026 => ['border' => '#f59e0b', 'text' => '#fbbf24']
+            ];
+            
+            foreach ($yillar as $yil): 
+                $renk = $yilRenkler[$yil];
+                
+                $yilVeriler = [];
+                $toplam = 0;
+                $sayac = 0;
+                foreach ($aylar as $idx => $ayAd) {
+                    $ayNo = $idx + 1;
+                    $deger = $tuketimVerileri[$yil][$ayNo] ?? null;
+                    $yilVeriler[$ayNo] = $deger;
+                    if ($deger !== null) {
+                        $toplam += $deger;
+                        $sayac++;
+                    }
+                }
+                $ortalama = $sayac > 0 ? $toplam / $sayac : 0;
+            ?>
+            <div style="margin-bottom:20px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:<?php echo $renk['border']; ?>"></span>
+                    <span style="font-weight:700;color:<?php echo $renk['text']; ?>"><?php echo $yil; ?></span>
+                    <span style="font-size:11px;color:#64748b;margin-left:auto;">Ort: <?php echo number_format($ortalama, 0, ',', '.'); ?> kg</span>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:11px;">
+                    <?php foreach ($aylar as $idx => $ayAd): 
+                        $ayNo = $idx + 1;
+                        $deger = $yilVeriler[$ayNo];
+                    ?>
+                    <div style="background:#0f1117;border-radius:6px;padding:6px;text-align:center;">
+                        <div style="color:#64748b;font-size:10px;margin-bottom:2px;"><?php echo substr($ayAd, 0, 3); ?></div>
+                        <div style="font-family:monospace;<?php echo $deger !== null ? 'color:#f1f5f9;' : 'color:#374151;' ?>">
+                            <?php echo $deger !== null ? number_format($deger, 0, ',', '.') : '-'; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e2430;display:flex;justify-content:space-between;font-size:11px;">
+                    <span style="color:#64748b;">Toplam: <span style="color:<?php echo $renk['text']; ?>;font-weight:700;"><?php echo number_format($toplam, 0, ',', '.'); ?></span> kg</span>
+                    <span style="color:#64748b;">Girilen: <?php echo $sayac; ?>/12 ay</span>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </div>

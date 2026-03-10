@@ -20,9 +20,9 @@ date_default_timezone_set('Europe/Istanbul');
 
 // Veritabanı bağlantı bilgileri
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'hammadde_takip');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_NAME', 'sayteki_db');
+define('DB_USER', 'sayteki_db');
+define('DB_PASS', 'hvk09sf1u5');
 define('DB_CHARSET', 'utf8mb4');
 
 // Uygulama ayarları

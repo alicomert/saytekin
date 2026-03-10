@@ -19,68 +19,65 @@ $hammaddeler = $db->query("SELECT h.*, ht.ad as tur_adi, u.ad as ulke_adi, pt.ad
 $kurlar = getDovizKurlari();
 ?>
 
-<div class="animate-fade-in">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-white">⚖️ Fiyat Karsilastirma</h1>
-        <p class="text-gray-500 text-sm mt-1">Karsilastirmak istediginiz hammaddeleri secin (en az 2)</p>
+<div style="margin-bottom:20px;">
+    <div style="font-size:18px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">⚖️ Fiyat Karsilastirma</div>
+    <div style="font-size:13px;color:#64748b;">Karsilastirmak istediginiz hammaddeleri secin (en az 2)</div>
+</div>
+
+<!-- Secim Paneli -->
+<div style="background:#141820;border:1px solid #1e2430;border-radius:12px;padding:20px;margin-bottom:20px;">
+    <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">
+        Hammadde Secimi
+        <span id="secim_sayisi" style="margin-left:8px;background:#1e2430;padding:2px 8px;border-radius:4px;color:#f1f5f9;">0 secili</span>
+        <button onclick="secimiTemizle()" style="margin-left:12px;background:transparent;border:none;color:#ef4444;font-size:11px;cursor:pointer;">
+            Temizle
+        </button>
     </div>
     
-    <!-- Secim Paneli -->
-    <div class="bg-dark-800 border border-dark-700 rounded-xl p-6 mb-6">
-        <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
-            Hammadde Secimi
-            <span id="secim_sayisi" class="ml-2 text-white bg-dark-700 px-2 py-0.5 rounded">0 secili</span>
-            <button onclick="secimiTemizle()" class="ml-4 text-red-400 hover:text-red-300 text-xs font-normal">
-                <i class="fas fa-times mr-1"></i>Temizle
-            </button>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        <?php foreach ($hammaddeler as $h): 
+            $varisMaliyet = hesaplaVarisMaliyeti($h, $kurlar);
+        ?>
+        <button type="button" onclick="toggleSecim(<?php echo $h['id']; ?>, this)" 
+                data-id="<?php echo $h['id']; ?>"
+                class="secim-btn" 
+                style="padding:10px 16px;background:#0f1117;border:1px solid #1e2430;border-radius:8px;text-align:left;cursor:pointer;transition:all 0.15s;">
+            <div style="font-weight:700;color:#94a3b8;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?php echo $h['hammadde_ismi']; ?>
+            </div>
+            <div style="font-size:11px;color:#34d399;margin-top:4px;">
+                <?php echo number_format($varisMaliyet, 2, ',', '.'); ?> <?php echo $h['para_birimi_kodu']; ?>/<?php echo $h['fiyat_birimi']; ?>
+            </div>
+        </button>
+        <?php endforeach; ?>
+    </div>
+</div>
+
+<!-- Karsilastirma Tablosu -->
+<div id="karsilastirma_tablosu" style="display:none;">
+    <div style="background:#141820;border:1px solid #1e2430;border-radius:12px;overflow:hidden;">
+        <div style="padding:16px;border-bottom:1px solid #1e2430;">
+            <span style="font-weight:700;color:#f1f5f9;"><span id="karsilastirma_sayisi">0</span> hammadde karsilastiriliyor</span>
         </div>
         
-        <div class="flex flex-wrap gap-3">
-            <?php foreach ($hammaddeler as $h): 
-                $varisMaliyet = hesaplaVarisMaliyeti($h, $kurlar);
-            ?>
-            <button type="button" onclick="toggleSecim(<?php echo $h['id']; ?>, this)" 
-                    data-id="<?php echo $h['id']; ?>"
-                    class="secim-btn px-4 py-3 bg-dark-900 border border-dark-700 hover:border-blue-500/50 rounded-lg text-left transition-all group">
-                <div class="font-bold text-gray-300 group-hover:text-white text-sm truncate max-w-[200px]">
-                    <?php echo $h['hammadde_ismi']; ?>
-                </div>
-                <div class="text-xs text-green-400 mt-1">
-                    <?php echo formatNumber($varisMaliyet, 2); ?> <?php echo $h['para_birimi_kodu']; ?>/<?php echo $h['fiyat_birimi']; ?>
-                </div>
-            </button>
-            <?php endforeach; ?>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#0f1117;">
+                        <th style="text-align:left;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:12px 16px;border-bottom:1px solid #1e2430;">KRITER</th>
+                    </tr>
+                </thead>
+                <tbody id="karsilastirma_body">
+                </tbody>
+            </table>
         </div>
     </div>
-    
-    <!-- Karsilastirma Tablosu -->
-    <div id="karsilastirma_tablosu" class="hidden">
-        <div class="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden">
-            <div class="p-4 border-b border-dark-700">
-                <span class="font-bold text-white"><span id="karsilastirma_sayisi">0</span> hammadde karsilastiriliyor</span>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-dark-900">
-                            <th class="text-left text-gray-500 font-bold text-xs uppercase tracking-wider p-4 border-b border-dark-700">KRITER</th>
-                            <!-- Dinamik olarak hammadde kolonlari eklenecek -->
-                        </tr>
-                    </thead>
-                    <tbody id="karsilastirma_body">
-                        <!-- Dinamik olarak satirlar eklenecek -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Bos durum -->
-    <div id="bos_durum" class="text-center py-12">
-        <div class="text-5xl mb-4">⚖️</div>
-        <div class="text-gray-500">Yukaridan en az 2 hammadde secerek karsilastirma yapabilirsiniz.</div>
-    </div>
+</div>
+
+<!-- Bos durum -->
+<div id="bos_durum" style="text-align:center;padding:48px 0;">
+    <div style="font-size:48;margin-bottom:16px;">⚖️</div>
+    <div style="color:#64748b;">Yukaridan en az 2 hammadde secerek karsilastirma yapabilirsiniz.</div>
 </div>
 
 <script>
@@ -93,12 +90,12 @@ function toggleSecim(id, btn) {
     
     if (index === -1) {
         seciliIds.push(id);
-        btn.classList.add('border-blue-500', 'bg-blue-500/10');
-        btn.classList.remove('border-dark-700', 'bg-dark-900');
+        btn.style.borderColor = '#3b82f6';
+        btn.style.background = '#1d3557';
     } else {
         seciliIds.splice(index, 1);
-        btn.classList.remove('border-blue-500', 'bg-blue-500/10');
-        btn.classList.add('border-dark-700', 'bg-dark-900');
+        btn.style.borderColor = '#1e2430';
+        btn.style.background = '#0f1117';
     }
     
     document.getElementById('secim_sayisi').textContent = seciliIds.length + ' secili';
@@ -108,8 +105,8 @@ function toggleSecim(id, btn) {
 function secimiTemizle() {
     seciliIds = [];
     document.querySelectorAll('.secim-btn').forEach(btn => {
-        btn.classList.remove('border-blue-500', 'bg-blue-500/10');
-        btn.classList.add('border-dark-700', 'bg-dark-900');
+        btn.style.borderColor = '#1e2430';
+        btn.style.background = '#0f1117';
     });
     document.getElementById('secim_sayisi').textContent = '0 secili';
     guncelleKarsilastirma();
@@ -136,25 +133,24 @@ function guncelleKarsilastirma() {
     const tbody = document.getElementById('karsilastirma_body');
     
     if (seciliIds.length < 2) {
-        tablo.classList.add('hidden');
-        bosDurum.classList.remove('hidden');
+        tablo.style.display = 'none';
+        bosDurum.style.display = 'block';
         return;
     }
     
-    tablo.classList.remove('hidden');
-    bosDurum.classList.add('hidden');
+    tablo.style.display = 'block';
+    bosDurum.style.display = 'none';
     document.getElementById('karsilastirma_sayisi').textContent = seciliIds.length;
     
-    // Secili hammaddeleri bul
     const seciliHammaddeler = hammaddeler.filter(h => seciliIds.includes(parseInt(h.id)));
     
-    // Header'i guncelle
-    thead.innerHTML = '<th class="text-left text-gray-500 font-bold text-xs uppercase tracking-wider p-4 border-b border-dark-700">KRITER</th>';
+    // Header
+    thead.innerHTML = '<th style="text-align:left;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:12px 16px;border-bottom:1px solid #1e2430;">KRITER</th>';
     seciliHammaddeler.forEach(h => {
         thead.innerHTML += `
-            <th class="text-left text-blue-400 font-bold text-sm p-4 border-b border-dark-700 min-w-[160px]">
-                <div class="text-white mb-1 truncate max-w-[150px]" title="${h.hammadde_ismi}">${h.hammadde_ismi}</div>
-                <div class="text-xs text-gray-500 font-normal">${h.stok_kodu || '-'}</div>
+            <th style="text-align:left;color:#60a5fa;font-weight:700;font-size:13px;padding:12px 16px;border-bottom:1px solid #1e2430;min-width:160px;">
+                <div style="color:#f1f5f9;margin-bottom:4px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${h.hammadde_ismi}">${h.hammadde_ismi}</div>
+                <div style="font-size:11px;color:#64748b;font-weight:400;">${h.stok_kodu || '-'}</div>
             </th>
         `;
     });
@@ -168,35 +164,16 @@ function guncelleKarsilastirma() {
         { label: 'Para Birimi', key: 'para_birimi_kodu', default: '-' },
         { label: 'Fiyat Birimi', key: 'fiyat_birimi', prefix: '/' },
         { label: 'Maliyet Turu', key: 'maliyet_turu', transform: v => v === 'G' ? 'G - Gerceklesen' : 'T - Tahmini' },
-        { 
-            label: 'Birim Fiyat', 
-            key: 'birim_fiyat', 
-            numeric: true,
-            suffix: h => ' ' + h.para_birimi_kodu,
-            format: v => parseFloat(v).toFixed(2)
-        },
-        { 
-            label: 'Birim Varis Maliyeti', 
-            key: null,
-            calculate: h => hesaplaVaris(h),
-            numeric: true,
-            vurgulu: true,
-            suffix: h => ' ' + h.para_birimi_kodu + '/' + h.fiyat_birimi,
-            format: v => v.toFixed(2)
-        },
-        { 
-            label: 'Mevcut Stok', 
-            key: 'stok_miktari', 
-            suffix: () => ' kg',
-            format: v => parseFloat(v || 0).toLocaleString('tr-TR', {maximumFractionDigits: 0})
-        }
+        { label: 'Birim Fiyat', key: 'birim_fiyat', numeric: true, suffix: h => ' ' + h.para_birimi_kodu, format: v => parseFloat(v).toFixed(2) },
+        { label: 'Birim Varis Maliyeti', key: null, calculate: h => hesaplaVaris(h), numeric: true, vurgulu: true, suffix: h => ' ' + h.para_birimi_kodu + '/' + h.fiyat_birimi, format: v => v.toFixed(2) },
+        { label: 'Mevcut Stok', key: 'stok_miktari', suffix: () => ' kg', format: v => parseFloat(v || 0).toLocaleString('tr-TR', {maximumFractionDigits: 0}) }
     ];
     
-    // Body'i guncelle
+    // Body
     tbody.innerHTML = '';
     kriterler.forEach((kriter, idx) => {
-        let row = `<tr class="border-b border-dark-700 ${idx % 2 === 0 ? '' : 'bg-dark-900/50'}">
-            <td class="p-4 text-gray-500 font-bold text-xs uppercase">${kriter.label}</td>`;
+        let row = `<tr style="border-bottom:1px solid #1e2430;${idx % 2 === 1 ? 'background:#0f1117;' : ''}">
+            <td style="padding:12px 16px;color:#64748b;font-weight:700;font-size:11px;text-transform:uppercase;">${kriter.label}</td>`;
         
         seciliHammaddeler.forEach(h => {
             let value;
@@ -219,9 +196,10 @@ function guncelleKarsilastirma() {
                 value = kriter.prefix + value;
             }
             
-            const colorClass = kriter.vurguli ? 'text-green-400 font-bold text-lg' : (kriter.numeric ? 'text-blue-400 font-bold' : 'text-gray-300');
+            const color = kriter.vurguli ? '#34d399' : (kriter.numeric ? '#60a5fa' : '#94a3b8');
+            const weight = (kriter.vurguli || kriter.numeric) ? '700' : '400';
             
-            row += `<td class="p-4 ${colorClass}">${value}</td>`;
+            row += `<td style="padding:12px 16px;color:${color};font-weight:${weight};">${value}</td>`;
         });
         
         row += '</tr>';
