@@ -1,12 +1,15 @@
 <?php
 // Sabit Tanımlar - Admin yönetim sayfası
-require_once 'includes/header.php';
+require_once 'includes/config.php';
+require_once 'includes/functions.php';
 
 // Sadece admin erişebilir
 if (!isAdmin()) {
-    header('Location: index.php');
+    echo '<script>window.location.href = "index.php";</script>';
     exit;
 }
+
+require_once 'includes/header.php';
 
 $pageTitle = 'Sabit Tanımlar';
 $db = getDB();

@@ -1,6 +1,9 @@
 <?php
 require_once 'includes/header.php';
 
+// Yetki kontrolü
+checkPermission('view');
+
 $pageTitle = 'İstatistikler';
 
 $db = getDB();
@@ -26,7 +29,12 @@ $turler = $db->query("SELECT kod, ad FROM hammadde_turleri WHERE is_active = 1 O
 // Tüketim verilerini al
 $tuketimVerileri = [];
 foreach ($hammaddeler as $h) {
-    $tuketimVerileri[$h['id']] = $db->query("SELECT yil, ay, miktar_kg FROM tuketim_verileri WHERE hammadde_id = {$h['id']}")->fetchAll(PDO::FETCH_KEY_PAIR);
+    $veriler = $db->query("SELECT yil, ay, miktar_kg FROM tuketim_verileri WHERE hammadde_id = {$h['id']}")->fetchAll();
+    $tuketimVerileri[$h['id']] = [];
+    foreach ($veriler as $v) {
+        $key = $v['yil'] . '-' . $v['ay'];
+        $tuketimVerileri[$h['id']][$key] = $v['miktar_kg'];
+    }
 }
 
 // Aylar

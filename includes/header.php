@@ -268,37 +268,56 @@ $kurlar = getDovizKurlari();
 <body>
     <?php if (isLoggedIn()): ?>
     <!-- Döviz Kur Bandı -->
-    <?php if ($kurlar): ?>
-    <div style="background:#0a0e15;border-bottom:1px solid #1e2430;padding:5px 24px;display:flex;gap:20px;font-size:11px;overflow-x:auto;">
+    <?php if ($kurlar): 
+        // today.xml kaynağı bilgisi
+        $kurKaynagi = isset($kurlar['kaynak']) ? $kurlar['kaynak'] : 'TCMB';
+        $kurTarihi = isset($kurlar['tarih']) ? $kurlar['tarih'] : date('d.m.Y');
+    ?>
+    <div style="background:#0a0e15;border-bottom:1px solid #1e2430;padding:10px 24px;display:flex;gap:16px;font-size:13px;overflow-x:auto;align-items:center;">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:#141820;border-radius:8px;border:1px solid #1e2430;">
+            <span style="font-size:16px;">📊</span>
+            <span style="color:#94a3b8;font-size:11px;">KAYNAK</span>
+            <span style="color:#fbbf24;font-weight:700;"><?php echo $kurKaynagi; ?></span>
+            <span style="color:#64748b;font-size:11px;">|</span>
+            <span style="color:#60a5fa;font-size:12px;"><?php echo $kurTarihi; ?></span>
+        </div>
+        
         <?php
         $kurItems = [
-            ['label' => 'USD/TRY', 'val' => $kurlar['USD_TRY'] ?? 0, 'renk' => '#60a5fa'],
-            ['label' => 'EUR/TRY', 'val' => $kurlar['EUR_TRY'] ?? 0, 'renk' => '#a78bfa'],
-            ['label' => 'GBP/TRY', 'val' => $kurlar['GBP_TRY'] ?? 0, 'renk' => '#34d399'],
-            ['label' => 'EUR/USD', 'val' => $kurlar['EUR_USD'] ?? 0, 'renk' => '#fbbf24'],
-            ['label' => 'GBP/USD', 'val' => $kurlar['GBP_USD'] ?? 0, 'renk' => '#f97316'],
+            ['label' => 'USD', 'birim' => 'TRY', 'val' => $kurlar['USD_TRY'] ?? 0, 'renk' => '#60a5fa', 'bg' => '#1d3557'],
+            ['label' => 'EUR', 'birim' => 'TRY', 'val' => $kurlar['EUR_TRY'] ?? 0, 'renk' => '#a78bfa', 'bg' => '#2e1065'],
+            ['label' => 'GBP', 'birim' => 'TRY', 'val' => $kurlar['GBP_TRY'] ?? 0, 'renk' => '#34d399', 'bg' => '#064e3b'],
+            ['label' => 'EUR', 'birim' => 'USD', 'val' => $kurlar['EUR_USD'] ?? 0, 'renk' => '#fbbf24', 'bg' => '#451a03'],
+            ['label' => 'GBP', 'birim' => 'USD', 'val' => $kurlar['GBP_USD'] ?? 0, 'renk' => '#f97316', 'bg' => '#7c2d12'],
         ];
         foreach ($kurItems as $k): 
             if ($k['val'] > 0):
         ?>
-        <div style="display:flex;gap:5;align-items:center;white-space:nowrap;">
-            <span style="color:#475569;"><?php echo $k['label']; ?></span>
-            <span style="color:<?php echo $k['renk']; ?>;font-weight:700;"><?php echo number_format($k['val'], 4); ?></span>
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:<?php echo $k['bg']; ?>;border-radius:8px;border:1px solid <?php echo $k['renk']; ?>44;white-space:nowrap;">
+            <span style="background:<?php echo $k['renk']; ?>22;color:<?php echo $k['renk']; ?>;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;"><?php echo $k['label']; ?></span>
+            <span style="color:#475569;font-size:11px;">/</span>
+            <span style="background:<?php echo $k['renk']; ?>22;color:<?php echo $k['renk']; ?>;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;"><?php echo $k['birim']; ?></span>
+            <span style="color:<?php echo $k['renk']; ?>;font-weight:700;font-size:14px;margin-left:4px;"><?php echo number_format($k['val'], 4); ?></span>
         </div>
         <?php 
             endif;
         endforeach; 
         ?>
-        <div style="margin-left:auto;color:#334155;white-space:nowrap;">🕐 <?php echo date('d.m.Y H:i'); ?></div>
-        <?php if (isAdmin()): 
-            $updateCheck = checkForUpdates();
-            if ($updateCheck['available']):
-        ?>
-        <div id="update-notification" style="display:flex;align-items:center;gap:8px;margin-left:16px;">
-            <span style="color:#f59e0b;font-size:11px;">🔄 Yeni güncelleme var!</span>
-            <button onclick="showUpdateModal()" style="background:#f59e0b;border:none;border-radius:4px;padding:4px 10px;color:#000;font-size:10px;font-weight:700;cursor:pointer;">Güncelle</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#141820;border-radius:8px;border:1px solid #1e2430;">
+                <span style="font-size:14px;">🕐</span>
+                <span style="color:#64748b;font-size:12px;"><?php echo date('d.m.Y H:i'); ?></span>
+            </div>
+            <?php if (isAdmin()): 
+                $updateCheck = checkForUpdates();
+                if ($updateCheck['available']):
+            ?>
+            <div id="update-notification" style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:#2a1f0a;border-radius:8px;border:1px solid #f59e0b44;">
+                <span style="color:#f59e0b;font-size:12px;font-weight:600;">🔄 Yeni güncelleme!</span>
+                <button onclick="showUpdateModal()" style="background:#f59e0b;border:none;border-radius:6px;padding:5px 12px;color:#000;font-size:11px;font-weight:700;cursor:pointer;">Güncelle</button>
+            </div>
+            <?php endif; endif; ?>
         </div>
-        <?php endif; endif; ?>
     </div>
     <?php endif; ?>
 
@@ -319,6 +338,7 @@ $kurlar = getDovizKurlari();
                 ['url' => 'siparisler.php', 'key' => 'siparisler', 'label' => '🛒 Siparişler' . ($aktifSiparisler > 0 ? " ($aktifSiparisler)" : ''), 'page' => 'siparisler'],
                 ['url' => 'fiyatlar.php', 'key' => 'fiyatlar', 'label' => '💰 Fiyat Tablosu', 'page' => 'fiyatlar'],
                 ['url' => 'karsilastirma.php', 'key' => 'karsilastirma', 'label' => '⚖️ Karşılaştırma', 'page' => 'karsilastirma'],
+                ['url' => 'istatistik.php', 'key' => 'istatistik', 'label' => '📊 İstatistikler', 'page' => 'istatistik'],
                 ['url' => 'stok-guncelle.php', 'key' => 'stokguncelle', 'label' => '🔄 Stok Güncelleme', 'page' => 'stok-guncelle'],
             ];
             
