@@ -155,7 +155,9 @@ foreach ($turler as $tur) {
 // Son yıla göre sırala
 $sonYil = end($YILLAR);
 usort($turStats, function($a, $b) use ($sonYil) {
-    return $b[$sonYil] <=> $a[$sonYil];
+    $valA = $a[$sonYil] ?? 0;
+    $valB = $b[$sonYil] ?? 0;
+    return $valB <=> $valA;
 });
 
 // Hammadde bazlı istatistik
