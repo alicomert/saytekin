@@ -338,35 +338,6 @@ $kurlar = getDovizKurlari();
             </div>
         </div>
         <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;">
-            <?php
-            $navItems = [
-                ['url' => 'index.php', 'key' => 'liste', 'label' => '📋 Tüm Liste', 'page' => 'index'],
-                ['url' => 'ihtiyac.php', 'key' => 'ihtiyac', 'label' => '⚠️ İhtiyaç Listesi', 'page' => 'ihtiyac', 'badge' => $kritikSayi],
-                ['url' => 'siparisler.php', 'key' => 'siparisler', 'label' => '🛒 Siparişler' . ($aktifSiparisler > 0 ? " ($aktifSiparisler)" : ''), 'page' => 'siparisler'],
-                ['url' => 'fiyatlar.php', 'key' => 'fiyatlar', 'label' => '💰 Fiyat Tablosu', 'page' => 'fiyatlar'],
-                ['url' => 'karsilastirma.php', 'key' => 'karsilastirma', 'label' => '⚖️ Karşılaştırma', 'page' => 'karsilastirma'],
-                ['url' => 'istatistik.php', 'key' => 'istatistik', 'label' => '📊 İstatistikler', 'page' => 'istatistik'],
-                ['url' => 'stok-guncelle.php', 'key' => 'stokguncelle', 'label' => '🔄 Stok Güncelleme', 'page' => 'stok-guncelle'],
-            ];
-            
-            if (isAdmin()) {
-                $navItems[] = ['url' => 'sabit-tanimlar.php', 'key' => 'sabit', 'label' => '⚙️ Sabit Tanımlar', 'page' => 'sabit-tanimlar'];
-            }
-            
-            foreach ($navItems as $nav):
-                $isActive = strpos($_SERVER['PHP_SELF'], $nav['page']) !== false;
-                $activeClass = $isActive ? 'active-' . $nav['key'] : '';
-            ?>
-            <a href="<?php echo $nav['url']; ?>" class="nav-btn <?php echo $activeClass; ?>">
-                <?php echo $nav['label']; ?>
-                <?php if ($nav['key'] === 'ihtiyac' && $kritikSayi > 0): ?>
-                <span class="badge"><?php echo $kritikSayi; ?></span>
-                <?php endif; ?>
-            </a>
-            <?php endforeach; ?>
-            
-            <div style="width:2px;height:28px;background:#1e2430;margin:0 8px;flex-shrink:0;"></div>
-            
             <span style="font-size:12px;color:#475569;white-space:nowrap;">
                 <?php 
                 $totalCount = count(getHammaddeler());
@@ -384,6 +355,38 @@ $kurlar = getDovizKurlari();
             
             <a href="logout.php" class="btn-secondary" style="margin-left: 12px;">Çıkış</a>
         </div>
+    </div>
+    
+    <!-- Sol Sidebar Navigation -->
+    <div style="position:fixed;left:0;top:60px;width:220px;height:calc(100vh - 60px);background:#0d1017;border-right:1px solid #1e2430;z-index:99;overflow-y:auto;padding:16px 0;">
+        <?php
+        $navItems = [
+            ['url' => 'index.php', 'key' => 'liste', 'label' => '📋 Tüm Liste', 'page' => 'index'],
+            ['url' => 'ihtiyac.php', 'key' => 'ihtiyac', 'label' => '⚠️ İhtiyaç Listesi', 'page' => 'ihtiyac', 'badge' => $kritikSayi],
+            ['url' => 'siparisler.php', 'key' => 'siparisler', 'label' => '🛒 Siparişler' . ($aktifSiparisler > 0 ? " ($aktifSiparisler)" : ''), 'page' => 'siparisler'],
+            ['url' => 'fiyatlar.php', 'key' => 'fiyatlar', 'label' => '💰 Fiyat Tablosu', 'page' => 'fiyatlar'],
+            ['url' => 'karsilastirma.php', 'key' => 'karsilastirma', 'label' => '⚖️ Karşılaştırma', 'page' => 'karsilastirma'],
+            ['url' => 'istatistik.php', 'key' => 'istatistik', 'label' => '📊 İstatistikler', 'page' => 'istatistik'],
+            ['url' => 'stok-guncelle.php', 'key' => 'stokguncelle', 'label' => '🔄 Stok Güncelleme', 'page' => 'stok-guncelle'],
+        ];
+        
+        if (isAdmin()) {
+            $navItems[] = ['url' => 'sabit-tanimlar.php', 'key' => 'sabit', 'label' => '⚙️ Sabit Tanımlar', 'page' => 'sabit-tanimlar'];
+        }
+        
+        foreach ($navItems as $nav):
+            $isActive = strpos($_SERVER['PHP_SELF'], $nav['page']) !== false;
+            $bgColor = $isActive ? 'rgba(59,130,246,0.15)' : 'transparent';
+            $borderColor = $isActive ? '#3b82f6' : 'transparent';
+            $textColor = $isActive ? '#60a5fa' : '#94a3b8';
+        ?>
+        <a href="<?php echo $nav['url']; ?>" style="display:flex;align-items:center;gap:10px;padding:12px 20px;margin:2px 12px;border-radius:8px;background:<?php echo $bgColor; ?>;border-left:3px solid <?php echo $borderColor; ?>;color:<?php echo $textColor; ?>;text-decoration:none;font-size:13px;font-weight:600;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(59,130,246,0.1)'" onmouseout="this.style.background='<?php echo $bgColor; ?>'">
+            <span><?php echo $nav['label']; ?></span>
+            <?php if ($nav['key'] === 'ihtiyac' && $kritikSayi > 0): ?>
+            <span style="background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:auto;"><?php echo $kritikSayi; ?></span>
+            <?php endif; ?>
+        </a>
+        <?php endforeach; ?>
     </div>
     
     <!-- Flash Messages -->
@@ -588,4 +591,4 @@ $kurlar = getDovizKurlari();
     </script>
     
     <!-- Main Content -->
-    <div style="padding:24px 28px;max-width:1400px;margin:0 auto;animation:fadeIn 0.3s;">
+    <div style="padding:24px 28px;margin-left:220px;animation:fadeIn 0.3s;min-height:calc(100vh - 60px);">
