@@ -1,4 +1,3 @@
-<?php if (isLoggedIn()): ?>
             </div><!-- /content-area -->
         </div><!-- /main-content -->
     </div><!-- /app-container -->
@@ -9,8 +8,6 @@
             <div>&copy; <?php echo date('Y'); ?> Hammadde Takip Sistemi</div>
             <div>Oturum: <?php echo $user['full_name'] ?? 'Kullanici'; ?></div>
         </div>
-    </div>
-<?php else: ?>
     </div>
 <?php endif; ?>
 
