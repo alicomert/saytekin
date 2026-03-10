@@ -1,133 +1,293 @@
 <?php
 require_once 'includes/header.php';
 
-$pageTitle = 'Ihtiyac Listesi';
+$pageTitle = 'İhtiyaç Listesi';
 
-// Tum hammaddeleri al ve kritik olanlari filtrele
+$db = getDB();
+
+// Siparişleri al
+$siparisler = $db->query("SELECT * FROM siparisler WHERE is_active = 1 AND geldi = 0")->fetchAll();
+$siparisByHammadde = [];
+foreach ($siparisler as $s) {
+    $siparisByHammadde[$s['hammadde_id']] = $s;
+}
+
 $hammaddeler = getHammaddeler();
-$kritikListe = [];
-
+$tuketimTumu = [];
 foreach ($hammaddeler as $h) {
-    $durum = getStokDurum($h);
-    if ($durum['kritik'] || ($durum['oran'] !== null && $durum['oran'] < 2)) {
-        $h['durum'] = $durum;
-        $kritikListe[] = $h;
+    $tuketimTumu[$h['id']] = getTuketimVerileri($h['id']);
+}
+
+$ihtiyacListe = [];
+foreach ($hammaddeler as $h) {
+    $stok = (float)$h['stok_miktari'];
+    $opt = (float)$h['hesaplanan_optimum'];
+    
+    // Get siparis data from the joined data
+    $sip = $siparisByHammadde[$h['id']] ?? null;
+    $sipMiktar = $sip ? (float)$sip['miktar_kg'] : 0;
+    $efektifStok = $stok + $sipMiktar;
+    
+    if ($h['sk'] !== 'K' && $h['sk'] !== 'A' && $opt > 0 && $efektifStok < $opt / 2) {
+        $optEfektif = $opt / 2;
+        $eksik = $optEfektif - $efektifStok;
+        
+        $terminGun = ($h['akreditif_gun'] ?? 0) + ($h['satici_tedarik_gun'] ?? 0) + ($h['yol_gun'] ?? 0) + ($h['depo_kabul_gun'] ?? 0);
+        
+        $tuk = $tuketimTumu[$h['id']];
+        $t2025 = [];
+        $t2026 = [];
+        for ($i = 1; $i <= 12; $i++) {
+            if (($tuk[2025][$i] ?? 0) > 0) $t2025[] = $tuk[2025][$i];
+            if (($tuk[2026][$i] ?? 0) > 0) $t2026[] = $tuk[2026][$i];
+        }
+        $tumTuk = array_merge($t2025, $t2026);
+        $aylikOrt = count($tumTuk) > 0 ? array_sum($tumTuk) / count($tumTuk) : 0;
+        $gunlukTuk = $aylikOrt / 30;
+        $kalanGun = $gunlukTuk > 0 ? round($efektifStok / $gunlukTuk) : null;
+        
+        $oran = $kalanGun !== null && $terminGun > 0 ? $kalanGun / $terminGun : ($kalanGun !== null ? 99 : null);
+        
+        $ihtiyacListe[] = [
+            'id' => $h['id'],
+            'sk' => $h['sk'],
+            'stok_kodu' => $h['stok_kodu'],
+            'tur_adi' => $h['tur_adi'],
+            'hammadde_ismi' => $h['hammadde_ismi'],
+            'tedarikci' => $h['tedarikci'],
+            'stok' => $stok,
+            'opt' => $opt,
+            'siparis_verildi' => $sip ? true : false,
+            'siparis_geldi' => $sip ? $sip['geldi'] : false,
+            'siparis_miktar' => $sip ? $sip['miktar_kg'] : '',
+            'siparis_no' => $sip ? $sip['siparis_no'] : '',
+            'siparis_tarih' => $sip ? date('d.m.Y', strtotime($sip['tarih'])) : '',
+            'termin_gun' => $terminGun,
+            'aylik_ort' => $aylikOrt,
+            'kalan_gun' => $kalanGun,
+            'eksik' => $eksik,
+            'oran' => $oran
+        ];
     }
 }
 
-// Siralama: En kritikler once
-usort($kritikListe, function($a, $b) {
-    return $a['durum']['oran'] <=> $b['durum']['oran'];
+usort($ihtiyacListe, function($a, $b) {
+    if ($a['oran'] === null) return 1;
+    if ($b['oran'] === null) return -1;
+    return $a['oran'] - $b['oran'];
 });
+
+$acil = array_filter($ihtiyacListe, fn($m) => $m['oran'] !== null && $m['oran'] < 0.5);
+$siparisVer = array_filter($ihtiyacListe, fn($m) => $m['oran'] !== null && $m['oran'] >= 0.5 && $m['oran'] < 1);
+$takipte = array_filter($ihtiyacListe, fn($m) => $m['oran'] === null || $m['oran'] >= 1);
+
+$toplamAktifSiparisler = count($siparisler);
 ?>
 
-<div style="margin-bottom:20px;">
-    <div style="font-size:18px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">⚠️ İhtiyaç Listesi</div>
-    <div style="font-size:13px;color:#64748b;">Kritik stok seviyesindeki hammaddeler - Toplam <?php echo count($kritikListe); ?> kayıt</div>
-</div>
+<style>
+.btn-primary { background: linear-gradient(135deg,#3b82f6,#6366f1); color:#fff; border:none; border-radius:8px; padding:10px 22px; cursor:pointer; font-weight:700; font-size:14px; }
+.btn-secondary { background:#1e2430; color:#94a3b8; border:1px solid #2d3748; border-radius:8px; padding:10px 18px; cursor:pointer; font-size:13px; }
+</style>
 
-<?php if (empty($kritikListe)): ?>
-<div style="background:#141820;border:1px solid #1e2430;border-radius:12px;padding:48px;text-align:center;">
-    <div style="font-size:48;margin-bottom:16px;">✅</div>
-    <div style="font-size:16px;color:#34d399;font-weight:700;margin-bottom:8px;">Tum Hammaddeler Normal Seviyede</div>
-    <div style="font-size:13px;color:#64748b;">Su an icin acil siparis gerektiren hammadde bulunmuyor.</div>
-</div>
-<?php else: ?>
-<div style="display:flex;flex-direction:column;gap:16px;">
-    <?php foreach ($kritikListe as $h): 
-        $durum = $h['durum'];
-        $son12 = getSon12AyOrtalama($h['id']);
-        $gunluk = $son12 / 30;
-        $termin = ($h['akreditif_gun'] ?? 0) + ($h['satici_tedarik_gun'] ?? 0) + ($h['yol_gun'] ?? 0) + ($h['depo_kabul_gun'] ?? 0);
-        $ihtiyac = ceil($gunluk * $termin * 1.5);
-        
-        $borderColor = $durum['oran'] < 0.5 ? '#ef444455' : ($durum['oran'] < 1 ? '#f9731655' : '#eab30855');
-        $bgColor = $durum['oran'] < 0.5 ? '#ef44440a' : ($durum['oran'] < 1 ? '#f973160a' : '#eab3080a');
-    ?>
-    <div style="background:#141820;border:1px solid <?php echo $borderColor; ?>;border-radius:12px;padding:20px;background-color:<?php echo $bgColor; ?>;">
-        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;">
-            <div style="flex:1;min-width:280px;">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                    <?php if ($h['sk'] == 'S'): ?>
-                    <span style="background:#3b82f622;color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">S</span>
-                    <?php elseif ($h['sk'] == 'K'): ?>
-                    <span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">K</span>
-                    <?php else: ?>
-                    <span style="background:#eab30822;color:#eab308;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">A</span>
-                    <?php endif; ?>
-                    <span style="color:#64748b;font-size:12px;font-family:monospace;"><?php echo $h['stok_kodu'] ?: '-'; ?></span>
-                    <span style="background:#1e2430;padding:2px 8px;border-radius:4px;font-size:11px;color:#94a3b8;"><?php echo $h['tur_adi']; ?></span>
-                </div>
-                <div style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:4px;"><?php echo $h['hammadde_ismi']; ?></div>
-                <?php if ($h['tedarikci']): ?>
-                <div style="font-size:12px;color:#64748b;">🏢 <?php echo $h['tedarikci']; ?></div>
-                <?php endif; ?>
-            </div>
-            
-            <div style="display:flex;flex-wrap:wrap;gap:24px;">
-                <div style="text-align:center;">
-                    <div style="font-size:10px;color:#64748b;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.05em;">Mevcut Stok</div>
-                    <div style="font-size:20px;font-weight:700;color:<?php echo $durum['renk']; ?>">
-                        <?php echo number_format($h['stok_miktari'], 0, ',', '.'); ?>
-                        <span style="font-size:12px;font-weight:400;color:#64748b;">kg</span>
-                    </div>
-                </div>
-                
-                <div style="text-align:center;">
-                    <div style="font-size:10px;color:#64748b;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.05em;">Kalan Gun</div>
-                    <div style="font-size:20px;font-weight:700;color:<?php echo $durum['renk']; ?>">
-                        <?php echo $durum['kalan_gun'] !== null ? $durum['kalan_gun'] : '-'; ?>
-                        <span style="font-size:12px;font-weight:400;color:#64748b;">gun</span>
-                    </div>
-                </div>
-                
-                <div style="text-align:center;">
-                    <div style="font-size:10px;color:#64748b;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.05em;">Termin</div>
-                    <div style="font-size:20px;font-weight:700;color:#fbbf24;">
-                        <?php echo $termin; ?>
-                        <span style="font-size:12px;font-weight:400;color:#64748b;">gun</span>
-                    </div>
-                </div>
-                
-                <div style="text-align:center;">
-                    <div style="font-size:10px;color:#64748b;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.05em;">Onerilen Siparis</div>
-                    <div style="font-size:20px;font-weight:700;color:#60a5fa;">
-                        <?php echo number_format($ihtiyac, 0, ',', '.'); ?>
-                        <span style="font-size:12px;font-weight:400;color:#64748b;">kg</span>
-                    </div>
-                </div>
-                
-                <div style="display:flex;align-items:center;">
-                    <span style="padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;
-                        <?php echo $durum['oran'] < 0.5 ? 'background:#ef4444;color:#fff;' : ($durum['oran'] < 1 ? 'background:#f97316;color:#fff;' : 'background:#eab308;color:#0f1117;'); ?>">
-                        <?php echo $durum['label']; ?>
-                    </span>
-                </div>
-            </div>
-            
-            <div style="display:flex;gap:8px;">
-                <a href="hammadde-detay.php?id=<?php echo $h['id']; ?>" 
-                    style="width:32px;height:32px;background:#1e2430;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#64748b;text-decoration:none;font-size:12px;"
-                    title="Detay">👁</a>
-                <a href="hammadde-form.php?id=<?php echo $h['id']; ?>" 
-                    style="width:32px;height:32px;background:#1e2430;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#64748b;text-decoration:none;font-size:12px;"
-                    title="Duzenle">✏️</a>
-            </div>
+<div style="padding: 24px 28px; max-width: 1400px; margin: 0 auto;">
+    <!-- Header -->
+    <div style="margin-bottom:20px;">
+        <h2 style="font-size:22px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">⚠️ İhtiyaç Listesi</h2>
+        <p style="color:#475569;font-size:13px;">Stok miktarı hesaplanan optimumun altında kalan hammaddeler</p>
+    </div>
+
+    <!-- Özet Kartlar -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+        <?php 
+        $kartlar = [
+            ['label' => 'Toplam İhtiyaç', 'val' => count($ihtiyacListe) . ' kalem', 'renk' => '#f59e0b', 'bg' => '#2a1f0a', 'icon' => '📦'],
+            ['label' => 'Siparişi Verilmiş', 'val' => $toplamAktifSiparisler . ' kalem', 'renk' => '#34d399', 'bg' => '#0d2018', 'icon' => '✅'],
+            ['label' => 'Acil Sipariş (<%25)', 'val' => count($acil) . ' kalem', 'renk' => '#ef4444', 'bg' => '#2d1a1a', 'icon' => '🚨'],
+            ['label' => 'Sipariş Ver (%25–75)', 'val' => count($siparisVer) . ' kalem', 'renk' => '#f97316', 'bg' => '#2a1a0a', 'icon' => '📦'],
+            ['label' => 'Takipte (>%75)', 'val' => count($takipte) . ' kalem', 'renk' => '#eab308', 'bg' => '#1f1e0a', 'icon' => '👁'],
+        ];
+        foreach ($kartlar as $k):
+        ?>
+        <div style="background:<?php echo $k['bg']; ?>;border:1px solid <?php echo $k['renk']; ?>44;border-radius:12px;padding:18px;border-top:3px solid <?php echo $k['renk']; ?>;">
+            <div style="font-size:22px;margin-bottom:8px;"><?php echo $k['icon']; ?></div>
+            <div style="font-size:22px;font-weight:700;color:<?php echo $k['renk']; ?>;"><?php echo $k['val']; ?></div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px;"><?php echo $k['label']; ?></div>
         </div>
-        
-        <!-- Progress bar -->
-        <div style="margin-top:16px;">
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:4px;">
-                <span>Stok/Termin Orani: %<?php echo round(($durum['oran'] ?? 0) * 100); ?></span>
-                <span>Optimum: <?php echo number_format($h['hesaplanan_optimum'], 0, ',', '.'); ?> kg</span>
-            </div>
-            <div style="height:6px;background:#0f1117;border-radius:3px;overflow:hidden;">
-                <div style="height:100%;border-radius:3px;transition:width 0.5s;width:<?php echo min(100, ($durum['oran'] ?? 0) * 50); ?>%;background-color:<?php echo $durum['renk']; ?>"></div>
-            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <?php if (empty($ihtiyacListe)): ?>
+    <div style="text-align:center;padding:60px;color:#334155;">
+        <div style="font-size:48px;margin-bottom:12px;">✅</div>
+        <div style="font-size:16px;color:#475569;">Tüm hammaddeler yeterli stok seviyesinde!</div>
+    </div>
+    <?php else: ?>
+    <div style="background:#141820;border:1px solid #1e2430;border-radius:12px;overflow:hidden;">
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#0d1017;border-bottom:2px solid #1e2430;">
+                        <?php 
+                        $basliklar = ["Öncelik","S/K","Stok Kodu","Hammadde İsmi","Tür","Mevcut Stok","Optimum","Gereken Miktar","Stok Ömrü / termin","Aylık ort. Tük.","Tahmini Tükenme","Termin","Sipariş Durumu","İşlem"];
+                        foreach ($basliklar as $h): ?>
+                        <th style="padding:11px 13px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;"><?php echo $h; ?></th>
+                        <?php endforeach; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($ihtiyacListe as $m): 
+                        $oncelik = $m['oran'] === null 
+                            ? ['renk' => '#475569', 'bg' => '#141820', 'etiket' => 'VERİ YOK', 'icon' => '—']
+                            : ($m['oran'] < 0.5 
+                                ? ['renk' => '#ef4444', 'bg' => '#2d1a1a', 'etiket' => 'ACİL SİPARİŞ', 'icon' => '🚨']
+                                : ($m['oran'] < 1 
+                                    ? ['renk' => '#f97316', 'bg' => '#2a1a0a', 'etiket' => 'SİPARİŞ VER', 'icon' => '📦']
+                                    : ($m['oran'] < 2 
+                                        ? ['renk' => '#eab308', 'bg' => '#1f1e0a', 'etiket' => 'TAKİPTE', 'icon' => '👁']
+                                        : ['renk' => '#34d399', 'bg' => '#0d2018', 'etiket' => 'RAHAT', 'icon' => '✅'])));
+                        
+                        $yuzde = $m['oran'] !== null ? min(100, round($m['oran'] * 50)) : 0;
+                        
+                        $kalanText = $m['kalan_gun'] !== null 
+                            ? ($m['kalan_gun'] <= 0 ? 'Tükendi!' : ($m['kalan_gun'] < 30 ? $m['kalan_gun'] . ' gün' : '~' . round($m['kalan_gun'] / 30) . ' ay'))
+                            : '—';
+                        
+                        $kalanRenk = $m['kalan_gun'] !== null
+                            ? ($m['kalan_gun'] <= 7 ? '#ef4444' : ($m['kalan_gun'] <= 30 ? '#f97316' : ($m['kalan_gun'] <= 90 ? '#eab308' : '#94a3b8')))
+                            : '#64748b';
+                    ?>
+                    <tr style="border-bottom:1px solid #1e2430;"
+                        onMouseEnter="this.style.background='#1a2130'"
+                        onMouseLeave="this.style.background='transparent'">
+                        
+                        <!-- Öncelik -->
+                        <td style="padding:12px 13px;">
+                            <span style="background:<?php echo $oncelik['bg']; ?>;color:<?php echo $oncelik['renk']; ?>;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;border:1px solid <?php echo $oncelik['renk']; ?>44;white-space:nowrap;">
+                                <?php echo $oncelik['icon'] . ' ' . $oncelik['etiket']; ?>
+                            </span>
+                        </td>
+                        
+                        <!-- S/K -->
+                        <td style="padding:12px 13px;">
+                            <span style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;
+                                background:<?php echo $m['sk']=='S'?'#1d3557':($m['sk']=='A'?'#221a05':'#2d1a1a'); ?>;
+                                color:<?php echo $m['sk']=='S'?'#60a5fa':($m['sk']=='A'?'#fbbf24':'#f87171'); ?>;">
+                                <?php echo $m['sk']; ?>
+                            </span>
+                        </td>
+                        
+                        <!-- Stok Kodu -->
+                        <td style="padding:12px 13px;color:#94a3b8;font-size:12px;font-family:monospace;"><?php echo $m['stok_kodu']; ?></td>
+                        
+                        <!-- Hammadde -->
+                        <td style="padding:12px 13px;font-weight:600;color:#60a5fa;font-size:13px;max-width:220px;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3;" 
+                            onclick="window.location='hammadde-detay.php?id=<?php echo $m['id']; ?>'">
+                            <?php echo htmlspecialchars($m['hammadde_ismi']); ?>
+                        </td>
+                        
+                        <!-- Tür -->
+                        <td style="padding:12px 13px;">
+                            <span style="background:#1e2430;padding:2px 8px;border-radius:4px;font-size:11px;color:#94a3b8;"><?php echo $m['tur_adi']; ?></span>
+                        </td>
+                        
+                        <!-- Mevcut Stok -->
+                        <td style="padding:12px 13px;font-weight:700;color:#f87171;font-size:13px;"><?php echo number_format($m['stok'], 0, ',', '.'); ?></td>
+                        
+                        <!-- Optimum -->
+                        <td style="padding:12px 13px;color:#64748b;font-size:12px;"><?php echo number_format($m['opt'], 0, ',', '.'); ?></td>
+                        
+                        <!-- Gereken Miktar -->
+                        <td style="padding:12px 13px;font-weight:700;color:<?php echo $oncelik['renk']; ?>;font-size:13px;"><?php echo number_format($m['eksik'], 0, ',', '.'); ?></td>
+                        
+                        <!-- Stok Ömrü / Termin -->
+                        <td style="padding:12px 13px;min-width:120px;">
+                            <div style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;gap:6px;">
+                                <span style="font-size:11px;color:<?php echo $oncelik['renk']; ?>;font-weight:700;">%<?php echo $yuzde; ?></span>
+                                <span style="font-size:9px;color:<?php echo $oncelik['renk']; ?>;font-weight:700;opacity:0.8;">
+                                    <?php echo $m['oran']>=1?'✓ RAHAT':($m['oran']>=0.75?'👁 TAKİP':($m['oran']>=0.25?'📦 SİP.VER':'🚨 ACİL')); ?>
+                                </span>
+                            </div>
+                            <div style="height:8px;background:#1e2430;border-radius:4px;overflow:hidden;">
+                                <div style="width:<?php echo $yuzde; ?>%;height:100%;border-radius:4px;<?php echo ($m['oran']===null || $m['oran']<0.5)?'background:linear-gradient(90deg,#ef4444,#f97316)':($m['oran']<1?'background:linear-gradient(90deg,#f97316,#eab308)':'background:linear-gradient(90deg,#eab308,#84cc16)'); ?>;transition:width 0.5s"></div>
+                            </div>
+                        </td>
+                        
+                        <!-- Aylık Ort -->
+                        <td style="padding:12px 13px;color:#94a3b8;font-size:12px;"><?php echo $m['aylik_ort'] > 0 ? number_format(round($m['aylik_ort']), 0, ',', '.') : '—'; ?></td>
+                        
+                        <!-- Tahmini Tükenme -->
+                        <td style="padding:12px 13px;font-weight:700;color:<?php echo $kalanRenk; ?>;font-size:13px;white-space:nowrap;"><?php echo $kalanText; ?></td>
+                        
+                        <!-- Termin -->
+                        <td style="padding:12px 13px;color:#64748b;font-size:12px;"><?php echo $m['termin_gun'] > 0 ? $m['termin_gun'] . ' gün' : '—'; ?></td>
+                        
+                        <!-- Sipariş Durumu -->
+                        <td style="padding:10px 13px;min-width:200px;">
+                            <?php if ($m['siparis_verildi'] && !$m['siparis_geldi']): ?>
+                            <div style="background:#0d2018;border:1px solid #10b98155;border-radius:8px;padding:8px 10px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5;">
+                                    <span style="font-size:11px;color:#34d399;font-weight:700;">✅ Sipariş Verildi</span>
+                                    <button onclick="siparisIptal(<?php echo $m['id']; ?>)" style="background:#2d1a1a;border:none;border-radius:4px;color:#f87171;font-size:10px;padding:2px 6px;cursor:pointer;">✕ İptal</button>
+                                </div>
+                                <?php if($m['siparis_no']): ?>
+                                <div style="font-size:11px;color:#fbbf24;font-weight:700;margin-bottom:3;">📋 <?php echo $m['siparis_no']; ?></div>
+                                <?php endif; ?>
+                                <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">
+                                    Miktar: <strong style="color:#34d399;"><?php echo number_format($m['siparis_miktar'], 0, ',', '.'); ?> kg</strong>
+                                </div>
+                                <?php if($m['siparis_tarih']): ?>
+                                <div style="font-size:10px;color:#475569;">📅 <?php echo $m['siparis_tarih']; ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <?php else: ?>
+                            <button onclick="siparisVer(<?php echo $m['id']; ?>, <?php echo max(0, round(($m['opt'] * 2) - $m['stok'])); ?>)"
+                                style="background:#1a2535;border:1px solid #3b82f655;border-radius:7px;padding:7px 12px;cursor:pointer;color:#60a5fa;font-size:11px;font-weight:700;width:100%;text-align:center;">
+                                🛒 Sipariş Verildi İşaretle
+                            </button>
+                            <?php endif; ?>
+                        </td>
+                        
+                        <!-- İşlem -->
+                        <td style="padding:12px 13px;">
+                            <div style="display:flex;gap:6px;">
+                                <button onclick="window.location='hammadde-detay.php?id=<?php echo $m['id']; ?>'" title="Detay" style="background:#1e2430;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:13px;">👁</button>
+                                <button onclick="window.location='hammadde-form.php?id=<?php echo $m['id']; ?>'" title="Düzenle" style="background:#1e2430;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:13px;">✏️</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
-    <?php endforeach; ?>
+    <?php endif; ?>
 </div>
-<?php endif; ?>
+
+<script>
+function siparisVer(id, miktar) {
+    const sipNo = prompt('Sipariş No:', '');
+    if (sipNo === null) return;
+    
+    fetch('ajax/siparis-ver.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'hammadde_id=' + id + '&miktar=' + miktar + '&siparis_no=' + encodeURIComponent(sipNo)
+    })
+    .then(r => r.json())
+    .then(data => { if (data.success) location.reload(); });
+}
+
+function siparisIptal(id) {
+    if (!confirm('Sipariş iptal edilsin mi?')) return;
+    
+    fetch('ajax/siparis-guncelle.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'id=' + id + '&islem=iptal'
+    })
+    .then(r => r.json())
+    .then(data => { if (data.success) location.reload(); });
+}
+</script>
 
 <?php require_once 'includes/footer.php'; ?>

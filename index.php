@@ -15,56 +15,6 @@ $turler = getTurler();
 
 // Sayfa basligi
 $pageTitle = 'Tum Liste (' . count($hammaddeler) . ' kayit)';
-
-// Turkce ay isimleri
-$aylar = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
-
-// Yardimci fonksiyonlar
-function hesaplaOrt($tuketim, $yil) {
-    $vals = [];
-    global $aylar;
-    foreach ($aylar as $ay) {
-        $val = $tuketim[$yil][$ay] ?? 0;
-        if ($val > 0) $vals[] = $val;
-    }
-    return count($vals) ? array_sum($vals) / count($vals) : 0;
-}
-
-function son12AyOrt($tuketim) {
-    global $aylar;
-    $tumAylar = [];
-    // 2025 tum aylar
-    foreach ($aylar as $ay) {
-        $val = $tuketim[2025][$ay] ?? 0;
-        if ($val > 0) $tumAylar[] = $val;
-    }
-    // 2026 Ocak-Subat
-    for ($i = 0; $i < 2; $i++) {
-        $val = $tuketim[2026][$aylar[$i]] ?? 0;
-        if ($val > 0) $tumAylar[] = $val;
-    }
-    // Son 12'yi al
-    $tumAylar = array_slice($tumAylar, -12);
-    return count($tumAylar) ? array_sum($tumAylar) / count($tumAylar) : 0;
-}
-
-function son3AyOrt($tuketim) {
-    global $aylar;
-    $tumAylar = [];
-    // 2025 tum aylar
-    foreach ($aylar as $ay) {
-        $val = $tuketim[2025][$ay] ?? 0;
-        if ($val > 0) $tumAylar[] = $val;
-    }
-    // 2026 Ocak-Subat
-    for ($i = 0; $i < 2; $i++) {
-        $val = $tuketim[2026][$aylar[$i]] ?? 0;
-        if ($val > 0) $tumAylar[] = $val;
-    }
-    // Son 3'u al
-    $tumAylar = array_slice($tumAylar, -3);
-    return count($tumAylar) ? array_sum($tumAylar) / count($tumAylar) : 0;
-}
 ?>
 
 <!-- Filtreler -->
@@ -109,38 +59,35 @@ function son3AyOrt($tuketim) {
 <!-- Tablo -->
 <div style="background:#141820;border:1px solid #1e2430;border-radius:12;overflow:hidden;">
     <div style="overflow-x:auto;">
-        <table class="data-table">
+        <table class="data-table" style="width:100%;border-collapse:collapse;min-width:1200;">
             <thead>
-                <tr>
-                    <th>S/K</th>
-                    <th>Stok Kodu</th>
-                    <th>Urun Kodu</th>
-                    <th>Tur</th>
-                    <th>Hammadde Ismi / Tedarikci</th>
-                    <th>Stok Miktari</th>
-                    <th>Optimum</th>
-                    <th>Termin</th>
-                    <th>2023 Ort.</th>
-                    <th>2024 Ort.</th>
-                    <th>2025 Ort.</th>
-                    <th>Son 12 Ay</th>
-                    <th>Son 3 Ay</th>
-                    <th>Islem</th>
+                <tr style="background:#0d1017;border-bottom:1px solid #1e2430;">
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">S/K</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Stok Kodu</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Urun Kodu</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Tur</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Hammadde Ismi / Tedarikci</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Stok Miktari</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Optimum</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Termin</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">2023 Ort.</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">2024 Ort.</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">2025 Ort.</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Son 12 Ay</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Son 3 Ay</th>
+                    <th style="padding:11px 12px;text-align:left;font-size:10;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Islem</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($hammaddeler as $h): 
                     $durum = getStokDurum($h);
                     
-                    // Tuketim verilerini al
-                    $tuketim = getTuketimVerileri($h['id']);
-                    
-                    // Ortalamalar
-                    $ort23 = hesaplaOrt($tuketim, 2023);
-                    $ort24 = hesaplaOrt($tuketim, 2024);
-                    $ort25 = hesaplaOrt($tuketim, 2025);
-                    $s12 = son12AyOrt($tuketim);
-                    $s3 = son3AyOrt($tuketim);
+                    // Ortalamalar - SQL fonksiyonlarini kullan
+                    $ort23 = getTuketimOrtalama($h['id'], 2023);
+                    $ort24 = getTuketimOrtalama($h['id'], 2024);
+                    $ort25 = getTuketimOrtalama($h['id'], 2025);
+                    $s12 = getSon12AyOrtalama($h['id']);
+                    $s3 = getSon3AyOrtalama($h['id']);
                     
                     // Termin toplam
                     $terminToplam = ($h['akreditif_gun'] ?? 0) + ($h['satici_tedarik_gun'] ?? 0) + ($h['yol_gun'] ?? 0) + ($h['depo_kabul_gun'] ?? 0);
@@ -149,8 +96,10 @@ function son3AyOrt($tuketim) {
                     $stokRenk = $durum['renk'] ?? '#94a3b8';
                     $stokEtiket = $durum['label'] ?? '';
                 ?>
-                <tr>
-                    <td>
+                <tr style="border-bottom:1px solid #1e2430;cursor:default;"
+                    onmouseenter="this.style.background='#1a2130'"
+                    onmouseleave="this.style.background='transparent'">
+                    <td style="padding:11px 12px;">
                         <?php if ($h['sk'] == 'S'): ?>
                         <span style="background:#3b82f622;color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">S</span>
                         <?php elseif ($h['sk'] == 'K'): ?>
@@ -159,17 +108,17 @@ function son3AyOrt($tuketim) {
                         <span style="background:#eab30822;color:#eab308;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">A</span>
                         <?php endif; ?>
                     </td>
-                    <td style="color:#94a3b8;"><?php echo $h['stok_kodu'] ?: '-'; ?></td>
-                    <td style="color:#64748b;"><?php echo $h['urun_kodu'] ?: '-'; ?></td>
-                    <td>
+                    <td style="padding:11px 12px;color:#94a3b8;"><?php echo $h['stok_kodu'] ?: '-'; ?></td>
+                    <td style="padding:11px 12px;color:#64748b;"><?php echo $h['urun_kodu'] ?: '-'; ?></td>
+                    <td style="padding:11px 12px;">
                         <span style="background:#1e2430;padding:2px 8px;border-radius:4px;font-size:11px;color:#94a3b8;"><?php echo $h['tur_adi'] ?: '-'; ?></span>
                     </td>
-                    <td>
+                    <td style="padding:11px 12px;">
                         <div style="font-weight:700;color:#f1f5f9;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?php echo htmlspecialchars($h['hammadde_ismi']); ?>">
                             <?php echo $h['hammadde_ismi']; ?>
                         </div>
                     </td>
-                    <td>
+                    <td style="padding:11px 12px;">
                         <span style="color:<?php echo $stokRenk; ?>;font-weight:700;">
                             <?php echo number_format($h['stok_miktari'], 0, ',', '.'); ?>
                         </span>
@@ -179,32 +128,32 @@ function son3AyOrt($tuketim) {
                         </span>
                         <?php endif; ?>
                     </td>
-                    <td style="color:#94a3b8;">
+                    <td style="padding:11px 12px;color:#94a3b8;">
                         <?php if ($h['hesaplanan_optimum']): ?>
                             <?php echo number_format($h['hesaplanan_optimum'], 0, ',', '.'); ?>
                         <?php else: ?>-<?php endif; ?>
                     </td>
-                    <td style="text-align:center;">
+                    <td style="padding:11px 12px;text-align:center;">
                         <?php if ($terminToplam > 0): ?>
                         <span style="color:#fbbf24;font-weight:700;"><?php echo $terminToplam; ?> gun</span>
                         <?php else: ?><span style="color:#475569;">-</span><?php endif; ?>
                     </td>
-                    <td style="text-align:right;font-family:monospace;color:#60a5fa;">
+                    <td style="padding:11px 12px;text-align:right;font-family:monospace;color:#60a5fa;">
                         <?php echo $ort23 > 0 ? number_format($ort23, 0, ',', '.') : '-'; ?>
                     </td>
-                    <td style="text-align:right;font-family:monospace;color:#a78bfa;">
+                    <td style="padding:11px 12px;text-align:right;font-family:monospace;color:#a78bfa;">
                         <?php echo $ort24 > 0 ? number_format($ort24, 0, ',', '.') : '-'; ?>
                     </td>
-                    <td style="text-align:right;font-family:monospace;color:#34d399;">
+                    <td style="padding:11px 12px;text-align:right;font-family:monospace;color:#34d399;">
                         <?php echo $ort25 > 0 ? number_format($ort25, 0, ',', '.') : '-'; ?>
                     </td>
-                    <td style="text-align:right;font-family:monospace;color:#fbbf24;font-weight:700;">
+                    <td style="padding:11px 12px;text-align:right;font-family:monospace;color:#fbbf24;font-weight:700;">
                         <?php echo $s12 > 0 ? number_format($s12, 0, ',', '.') : '-'; ?>
                     </td>
-                    <td style="text-align:right;font-family:monospace;color:#f97316;font-weight:700;">
+                    <td style="padding:11px 12px;text-align:right;font-family:monospace;color:#f97316;font-weight:700;">
                         <?php echo $s3 > 0 ? number_format($s3, 0, ',', '.') : '-'; ?>
                     </td>
-                    <td>
+                    <td style="padding:11px 12px;">
                         <div style="display:flex;gap:8;">
                             <a href="hammadde-detay.php?id=<?php echo $h['id']; ?>" 
                                 style="width:28;height:28;background:#1e2430;border-radius:6;display:flex;align-items:center;justify-content:center;color:#64748b;text-decoration:none;font-size:12px;"
