@@ -684,10 +684,16 @@ function downloadLatestRelease() {
 }
 
 function createBackup() {
+    // Zaman limitini 5 dakikaya çıkar
+    set_time_limit(300);
+    
     $backupDir = __DIR__ . '/../backups/' . date('Y-m-d_H-i-s') . '/';
     if (!is_dir($backupDir)) {
         mkdir($backupDir, 0755, true);
     }
+    
+    // Hariç tutulacak klasörler
+    $excludeDirs = ['backups', 'uploads', 'update_temp', 'vendor', 'node_modules', '.git', 'cache'];
     
     // PHP dosyalarını yedekle
     $sourceDir = __DIR__ . '/../';
@@ -698,8 +704,21 @@ function createBackup() {
     
     $backedUpFiles = [];
     foreach ($iterator as $file) {
+        // Klasör kontrolü - hariç tutulan klasörlerdeki dosyaları atla
+        $relativePath = str_replace($sourceDir, '', $file->getPathname());
+        $shouldExclude = false;
+        foreach ($excludeDirs as $exclude) {
+            if (strpos($relativePath, $exclude . '/') === 0 || strpos($relativePath, $exclude . '\\') === 0) {
+                $shouldExclude = true;
+                break;
+            }
+        }
+        if ($shouldExclude) {
+            continue;
+        }
+        
         if ($file->isFile() && $file->getExtension() === 'php') {
-            $targetPath = $backupDir . str_replace($sourceDir, '', $file->getPathname());
+            $targetPath = $backupDir . $relativePath;
             $targetDir = dirname($targetPath);
             
             if (!is_dir($targetDir)) {
@@ -707,7 +726,7 @@ function createBackup() {
             }
             
             copy($file->getPathname(), $targetPath);
-            $backedUpFiles[] = str_replace($sourceDir, '', $file->getPathname());
+            $backedUpFiles[] = $relativePath;
         }
     }
     
@@ -720,6 +739,9 @@ function createBackup() {
 }
 
 function extractAndApplyUpdate($zipFile) {
+    // Zaman limitini 5 dakikaya çıkar
+    set_time_limit(300);
+    
     $extractDir = __DIR__ . '/../update_temp/';
     
     // Eski temp dizini varsa temizle
