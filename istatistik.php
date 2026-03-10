@@ -297,20 +297,24 @@ $maxSonYil = !empty($hammaddeStats) ? max(array_column($hammaddeStats, $sonYilKe
                         if (count($sonIkiYil) >= 2) {
                             $oncekiYil = $sonIkiYil[0];
                             $sonYil = $sonIkiYil[1];
-                            $trend = $t[$oncekiYil] > 0 ? (($t[$sonYil] - $t[$oncekiYil]) / $t[$oncekiYil] * 100) : null;
+                            $oncekiDeger = $t[$oncekiYil] ?? 0;
+                            $sonDeger = $t[$sonYil] ?? 0;
+                            $trend = $oncekiDeger > 0 ? (($sonDeger - $oncekiDeger) / $oncekiDeger * 100) : null;
                         }
-                        $yilRenkler = [
-                            $sonIkiYil[0] ?? null => '#a78bfa',
-                            $sonIkiYil[1] ?? null => '#34d399'
-                        ];
+                        $yilRenkler = [];
+                        if (isset($sonIkiYil[0])) $yilRenkler[$sonIkiYil[0]] = '#a78bfa';
+                        if (isset($sonIkiYil[1])) $yilRenkler[$sonIkiYil[1]] = '#34d399';
                     ?>
                     <tr style="border-bottom:1px solid #1e2430;"
                         onMouseEnter="this.style.background='#1a2130'"
                         onMouseLeave="this.style.background='transparent'">
                         <td style="padding:11px 14px;"><span style="background:#1e2430;padding:3px 10px;border-radius:4px;font-size:12px;color:#94a3b8;font-weight:700;"><?php echo htmlspecialchars($t['tur']); ?></span></td>
                         <td style="padding:11px 14px;color:#64748b;font-size:12px;"><?php echo $t['sayi']; ?></td>
-                        <?php foreach ($sonIkiYil as $yil): ?>
-                        <td style="padding:11px 14px;color:<?php echo $yilRenkler[$yil]; ?>;font-size:13px;font-family:monospace;font-weight:600;"><?php echo N($t[$yil]); ?></td>
+                        <?php foreach ($sonIkiYil as $yil): 
+                            $yilDeger = $t[$yil] ?? 0;
+                            $yilRenk = $yilRenkler[$yil] ?? '#94a3b8';
+                        ?>
+                        <td style="padding:11px 14px;color:<?php echo $yilRenk; ?>;font-size:13px;font-family:monospace;font-weight:600;"><?php echo N($yilDeger); ?></td>
                         <?php endforeach; ?>
                         <td style="padding:11px 14px;color:#fbbf24;font-size:13px;font-family:monospace;font-weight:600;"><?php echo N($t['s12']); ?></td>
                         <td style="padding:11px 14px;">

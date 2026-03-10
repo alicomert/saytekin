@@ -213,6 +213,7 @@ $kurlar = getDovizKurlari();
             gap: 6px;
             transition: all 0.2s;
             text-decoration: none;
+            margin: 0 2px;
         }
         .nav-btn:hover { border-color: #2d3748; color: #94a3b8; }
         
@@ -293,7 +294,7 @@ $kurlar = getDovizKurlari();
         foreach ($kurItems as $k): 
             if ($k['val'] > 0):
         ?>
-        <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:<?php echo $k['bg']; ?>;border-radius:8px;border:1px solid <?php echo $k['renk']; ?>44;white-space:nowrap;">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:<?php echo $k['bg']; ?>;border-radius:8px;border:1px solid <?php echo $k['renk']; ?>44;white-space:nowrap;margin: 0 4px;">
             <span style="background:<?php echo $k['renk']; ?>22;color:<?php echo $k['renk']; ?>;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;"><?php echo $k['label']; ?></span>
             <span style="color:#475569;font-size:11px;">/</span>
             <span style="background:<?php echo $k['renk']; ?>22;color:<?php echo $k['renk']; ?>;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;"><?php echo $k['birim']; ?></span>
@@ -303,19 +304,22 @@ $kurlar = getDovizKurlari();
             endif;
         endforeach; 
         ?>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+        <div style="margin-left:auto;display:flex;align-items:center;gap:20px;">
             <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#141820;border-radius:8px;border:1px solid #1e2430;">
                 <span style="font-size:14px;">🕐</span>
                 <span style="color:#64748b;font-size:12px;"><?php echo date('d.m.Y H:i'); ?></span>
             </div>
             <?php if (isAdmin()): ?>
-            <button onclick="checkUpdateManually()" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e2430;border:1px solid #2d3748;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa';" onmouseout="this.style.borderColor='#2d3748';this.style.color='#94a3b8';">
-                <span style="font-size:14px;">🔄</span>
-                <span>Güncelleme Kontrol Et</span>
-            </button>
-            <div id="update-notification" style="display:none;align-items:center;gap:8px;padding:6px 12px;background:#2a1f0a;border-radius:8px;border:1px solid #f59e0b44;">
-                <span style="color:#f59e0b;font-size:12px;font-weight:600;">🔄 Yeni güncelleme!</span>
-                <button onclick="showUpdateModal()" style="background:#f59e0b;border:none;border-radius:6px;padding:5px 12px;color:#000;font-size:11px;font-weight:700;cursor:pointer;">Güncelle</button>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <button onclick="checkUpdateManually()" id="btn-check-update" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e2430;border:1px solid #2d3748;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa';" onmouseout="this.style.borderColor='#2d3748';this.style.color='#94a3b8';">
+                    <span style="font-size:14px;">🔄</span>
+                    <span>Kontrol Et</span>
+                </button>
+                <button onclick="showUpdateModal()" id="btn-do-update" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:#2a1f0a;border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                    <span style="font-size:14px;">⬆️</span>
+                    <span>Güncelle</span>
+                    <span id="update-badge" style="background:#f59e0b;color:#000;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:4px;">1</span>
+                </button>
             </div>
             <?php endif; ?>
         </div>
@@ -331,7 +335,7 @@ $kurlar = getDovizKurlari();
                 <div style="font-size:10;color:#475569;letter-spacing:0.06em;">VERİ GİRİŞ SİSTEMİ</div>
             </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8;">
+        <div style="display:flex;align-items:center;gap:20px;">
             <?php
             $navItems = [
                 ['url' => 'index.php', 'key' => 'liste', 'label' => '📋 Tüm Liste', 'page' => 'index'],
@@ -373,9 +377,9 @@ $kurlar = getDovizKurlari();
             <?php endif; ?>
             
             <?php if (isAdmin()): ?>
-            <a href="sabit-tanimlar.php" class="nav-btn" style="margin-left: 8px;">⚙️ Sabit Tanımlar</a>
+            <a href="sabit-tanimlar.php" class="nav-btn" style="margin-left: 12px;">⚙️ Sabit Tanımlar</a>
             <?php endif; ?>
-            <a href="logout.php" class="btn-secondary" style="margin-left: 8px;">Çıkış</a>
+            <a href="logout.php" class="btn-secondary" style="margin-left: 12px;">Çıkış</a>
         </div>
     </div>
     
@@ -464,7 +468,9 @@ $kurlar = getDovizKurlari();
     }
     
     function checkUpdateManually() {
-        const btn = event.currentTarget;
+        const btn = document.getElementById('btn-check-update');
+        if (!btn) return;
+        
         const originalContent = btn.innerHTML;
         btn.innerHTML = '<span style="font-size:14px;">⏳</span><span>Kontrol ediliyor...</span>';
         btn.disabled = true;
@@ -479,8 +485,8 @@ $kurlar = getDovizKurlari();
                     alert('❌ Hata: ' + data.error);
                 } else if (data.available) {
                     updateData = data;
-                    // Bildirimi göster
-                    document.getElementById('update-notification').style.display = 'flex';
+                    // Güncelleme butonunu göster
+                    showUpdateButton();
                     // Modal'ı aç
                     showUpdateModal();
                 } else {
@@ -551,14 +557,32 @@ $kurlar = getDovizKurlari();
     
     // Sayfa yüklendiğinde mevcut güncellemeyi kontrol et
     document.addEventListener('DOMContentLoaded', function() {
+        checkUpdateOnLoad();
+    });
+    
+    function checkUpdateOnLoad() {
         fetch('ajax/check-update.php')
             .then(r => r.json())
             .then(data => {
                 if (data.available) {
-                    document.getElementById('update-notification').style.display = 'flex';
+                    showUpdateButton();
                 }
             });
-    });
+    }
+    
+    function showUpdateButton() {
+        const btnCheck = document.getElementById('btn-check-update');
+        const btnUpdate = document.getElementById('btn-do-update');
+        if (btnCheck) btnCheck.style.display = 'none';
+        if (btnUpdate) btnUpdate.style.display = 'flex';
+    }
+    
+    function hideUpdateButton() {
+        const btnCheck = document.getElementById('btn-check-update');
+        const btnUpdate = document.getElementById('btn-do-update');
+        if (btnCheck) btnCheck.style.display = 'flex';
+        if (btnUpdate) btnUpdate.style.display = 'none';
+    }
     </script>
     <?php endif; ?>
     
