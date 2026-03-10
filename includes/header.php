@@ -308,15 +308,16 @@ $kurlar = getDovizKurlari();
                 <span style="font-size:14px;">🕐</span>
                 <span style="color:#64748b;font-size:12px;"><?php echo date('d.m.Y H:i'); ?></span>
             </div>
-            <?php if (isAdmin()): 
-                $updateCheck = checkForUpdates();
-                if ($updateCheck['available']):
-            ?>
-            <div id="update-notification" style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:#2a1f0a;border-radius:8px;border:1px solid #f59e0b44;">
+            <?php if (isAdmin()): ?>
+            <button onclick="checkUpdateManually()" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e2430;border:1px solid #2d3748;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa';" onmouseout="this.style.borderColor='#2d3748';this.style.color='#94a3b8';">
+                <span style="font-size:14px;">🔄</span>
+                <span>Güncelleme Kontrol Et</span>
+            </button>
+            <div id="update-notification" style="display:none;align-items:center;gap:8px;padding:6px 12px;background:#2a1f0a;border-radius:8px;border:1px solid #f59e0b44;">
                 <span style="color:#f59e0b;font-size:12px;font-weight:600;">🔄 Yeni güncelleme!</span>
                 <button onclick="showUpdateModal()" style="background:#f59e0b;border:none;border-radius:6px;padding:5px 12px;color:#000;font-size:11px;font-weight:700;cursor:pointer;">Güncelle</button>
             </div>
-            <?php endif; endif; ?>
+            <?php endif; ?>
         </div>
     </div>
     <?php endif; ?>
@@ -462,6 +463,37 @@ $kurlar = getDovizKurlari();
             });
     }
     
+    function checkUpdateManually() {
+        const btn = event.currentTarget;
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<span style="font-size:14px;">⏳</span><span>Kontrol ediliyor...</span>';
+        btn.disabled = true;
+        
+        fetch('ajax/check-update.php')
+            .then(r => r.json())
+            .then(data => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                
+                if (data.error) {
+                    alert('❌ Hata: ' + data.error);
+                } else if (data.available) {
+                    updateData = data;
+                    // Bildirimi göster
+                    document.getElementById('update-notification').style.display = 'flex';
+                    // Modal'ı aç
+                    showUpdateModal();
+                } else {
+                    alert('✅ Sistem güncel!\n\nMevcut sürüm: ' + (data.current_sha ? data.current_sha.substring(0, 7) : 'Bilinmiyor') + '\nSon kontrol: ' + new Date().toLocaleString('tr-TR'));
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                alert('❌ Bağlantı hatası: ' + err.message);
+            });
+    }
+    
     function startUpdate() {
         document.getElementById('update-actions').style.display = 'none';
         document.getElementById('update-progress').style.display = 'block';
@@ -516,6 +548,17 @@ $kurlar = getDovizKurlari();
                 }
             });
     }
+    
+    // Sayfa yüklendiğinde mevcut güncellemeyi kontrol et
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('ajax/check-update.php')
+            .then(r => r.json())
+            .then(data => {
+                if (data.available) {
+                    document.getElementById('update-notification').style.display = 'flex';
+                }
+            });
+    });
     </script>
     <?php endif; ?>
     
