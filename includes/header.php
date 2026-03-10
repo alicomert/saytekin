@@ -200,7 +200,7 @@ $kurlar = getDovizKurlari();
         
         /* Nav Button Active States */
         .nav-btn {
-            padding: 7px 14px;
+            padding: 8px 16px;
             border-radius: 7px;
             border: 1px solid #1e2430;
             background: transparent;
@@ -210,10 +210,10 @@ $kurlar = getDovizKurlari();
             font-size: 12px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             transition: all 0.2s;
             text-decoration: none;
-            margin: 0 2px;
+            margin: 0 4px;
         }
         .nav-btn:hover { border-color: #2d3748; color: #94a3b8; }
         
@@ -359,7 +359,7 @@ $kurlar = getDovizKurlari();
             </a>
             <?php endforeach; ?>
             
-            <div style="width:1;height:24;background:#1e2430;margin:0 4px;"></div>
+            <div style="width:2;height:28;background:#1e2430;margin:0 8px;"></div>
             
             <span style="font-size:12;color:#475569;">
                 <?php 
