@@ -7,6 +7,15 @@ if (isLoggedIn()) {
     exit;
 }
 
+// Kullanici var mi kontrol et - yoksa setup'a yonlendir
+$db = getDB();
+$userCount = $db->query("SELECT COUNT(*) as count FROM users WHERE is_active = 1")->fetch()['count'];
+
+if ($userCount == 0) {
+    header('Location: setup.php');
+    exit;
+}
+
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
