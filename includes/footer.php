@@ -10,25 +10,25 @@
             <div>Oturum: <?php echo $user['full_name'] ?? 'Kullanici'; ?></div>
         </div>
     </div>
-    
-    <!-- Flash Messages -->
-    <?php if ($flashMessage): ?>
-    <div id="flash-message" class="flash-message flash-<?php echo $flashMessage['type']; ?>">
-        <?php echo $flashMessage['message']; ?>
-    </div>
-    <script>
-        setTimeout(() => {
-            const el = document.getElementById('flash-message');
-            if (el) {
-                el.style.opacity = '0';
-                el.style.transition = 'opacity 0.3s';
-                setTimeout(() => el.remove(), 300);
-            }
-        }, 3000);
-    </script>
-    <?php endif; ?>
 <?php else: ?>
     </div>
+<?php endif; ?>
+
+<!-- Flash Messages -->
+<?php if (isset($flashMessage) && $flashMessage): ?>
+<div id="flash-message" class="flash-message flash-<?php echo $flashMessage['type']; ?>">
+    <?php echo $flashMessage['message']; ?>
+</div>
+<script>
+    setTimeout(() => {
+        const el = document.getElementById('flash-message');
+        if (el) {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.3s';
+            setTimeout(() => el.remove(), 300);
+        }
+    }, 3000);
+</script>
 <?php endif; ?>
 
 <script>

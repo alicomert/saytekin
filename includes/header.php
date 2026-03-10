@@ -457,22 +457,6 @@ $kurlar = getDovizKurlari();
             <!-- Content Area -->
             <div class="content-area">
 
-<?php if ($flashMessage): ?>
-<div id="flash-message" class="flash-message flash-<?php echo $flashMessage['type']; ?>">
-    <?php echo $flashMessage['message']; ?>
-</div>
-<script>
-    setTimeout(() => {
-        const el = document.getElementById('flash-message');
-        if (el) {
-            el.style.opacity = '0';
-            el.style.transition = 'opacity 0.3s';
-            setTimeout(() => el.remove(), 300);
-        }
-    }, 3000);
-</script>
-<?php endif; ?>
-
 <!-- Güncelleme Modal -->
 <div id="update-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:2000;align-items:center;justify-content:center;">
     <div style="background:#141820;border:1px solid #1e2430;border-radius:12px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
@@ -652,3 +636,4 @@ function hideUpdateButton() {
     if (btnUpdate) btnUpdate.style.display = 'none';
 }
 </script>
+<?php endif; ?>
