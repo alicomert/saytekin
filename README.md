@@ -1,309 +1,141 @@
-# Simple PHP MVC Framework (no composer) V2.0
+# Hammadde Takip Sistemi
 
-## Table of Content:
+Modern, esnek ve dinamik PHP/MySQL tabanli hammadde yonetim sistemi. Tailwind CSS ile modern arayuz.
 
-* [Requirement](#requirement)
-* [Installation](#installation)
-* [Usage](#usage)
-* [Configuration](#configuration)
-* [Routing](#routing)
-* [Controller](#controller)
-* [Migration](#migration)
-* [Database and Models](#database-and-models)
-* [Helper functions](#helper-functions)
-    * [view()](#view)
-    * [redirect()](#redirect)
-    * [public_dir()](#public_dir)
-    * [abort()](#abort)
-    * [dd()](#dd)
+## Özellikler
 
-<br>
+### Temel Özellikler
+- ✅ Kullanici girisi (Session - 1 hafta)
+- ✅ Hammadde CRUD islemleri
+- ✅ Tuketim verileri (Yil/Ay bazli)
+- ✅ Stok takibi ve kritik seviye uyarilari
+- ✅ Fiyat ve maliyet yonetimi
+- ✅ Termin suresi takibi (4 asamali)
+- ✅ Siparis yonetimi
+- ✅ Doviz kuru entegrasyonu (API)
+- ✅ Fiyat karsilastirma
+- ✅ Stok guncelleme toplu mod
 
-## Requirement
+### Hammadde Turleri
+- Standart (S)
+- Kapali (K)
+- Alternatif (A)
 
-PHP 8.0+
+### Raporlama & Analiz
+- Yillik tuketim ortalamalari
+- Son 12 ay / Son 3 ay ortalama
+- Stok/Termin orani hesaplama
+- Kritik stok listesi
+- Fiyat gecmisi takibi
 
-## Installation
+## Kurulum
 
-1- Download Zip and extract.
+### 1. Veritabani Olusturma
 
-2- Run Migration:
+```bash
+# MySQL/MariaDB'e baglan
+mysql -u root -p
 
-```shell
-  php mil.php
+# Veritabani olustur
+CREATE DATABASE hammadde_takip CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE hammadde_takip;
+
+# Tablolari olustur
+source database/schema.sql
+
+# (Opsiyonel) Ornek veriler
+source database/sample_data.sql
 ```
 
-3- Run server:
+### 2. Config Ayarlari
 
-```shell
-php -S localhost:80
-```
-
-## Usage
-
-### Configuration
-
-* set database configuration on `Core/config.php`.
-* access to configs using `config()` function
+`includes/config.php` dosyasinda veritabani bilgilerini guncelleyin:
 
 ```php
-echo config("db_name"); // php_mvc_framework
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'hammadde_takip');
+define('DB_USER', 'root');
+define('DB_PASS', 'sifreniz');
 ```
 
-### Routing
-
-you can define routes on `/Routes.php`;
-
-* `url`  for access url.
-* `name` for route name that can access with `route()` function.
-* `controller` for controller class
-* `method` for controller callback method
-
-```php
-[
-    "url" => "/welcome",
-    "name" => "welcome",
-    "controller" => Controllers\Welcome::class,
-    "method" => 'index'
-]
-```
-
-<br>
-<br>
-
-#### Route Parameters
-
-you can bind parameter to route using `{key}`:
-
-```php
-[
-    "url" => "/user/{id}/show",
-    "name" => "show_user",
-    "controller" => Controllers\Users::class,
-    "method" => 'show'
-]
-```
-
-The `show()` function should accept a parameter with `$id` name as following:
-
-```php
-class Users extends BaseController
-{
-    public function show($id)
-    {
-        // code    
-    }
-}
-```
-
-<br>
-<br>
-
-#### Getting Route By name
-
-you can get routes by its name:
-
-```php
-echo route('welcome'); // "localhost/welcome"
-```
-
-if your route has parameter you should define through an array:
-
-```php
-echo route('show_user', ['id' => 2]); // localhost/user/2/show
-```
-
-<br>
-
-## Controller
-
-You can make controllers within `/Controllers` directory.
-
-Controllers should extend `Core/BaseController.php`
-
-```php
-namespace Controllers;
-
-use Core\BaseController;
-
-class Users extends BaseController
-{
-    // methods
-}
-```
-
-<br>
-
-## Migration
-
-You can create migration files using cli commands
-
-start cli file by opening mil.php file
-
-```shell
-php mil.php
-```
-
-then you can create migration file by commands and migrations will be created in `Database` directory.
-
-> migrations should have 'name' and 'columns' keys, which 'columns' should be an array of columns.
-
-```php
-[
-    "name" => "users",
-    "columns" => [
-        "id INT AUTO_INCREMENT PRIMARY KEY",
-        "name VARCHAR(255) NOT NULL",
-    ]
-]
-```
-
-
-## Database and Models
-
-You can create model files within `/Models` directory. models should extend `Core/Model.php`:
-
-```php
-namespace Models;
-
-use Core\Model;
-
-class Users extends Model
-{
-    // methods
-}
-```
-
-if you created your model as controller name, you do not need to define model in controller.
-
-you can access it with `$this->Database` in controller:
-
-```php
-class Users extends BaseController
-{
-    public function show()
-    {
-        dd($this->Database->GetAllUsers());
-    }
-}
-```
-
-if you want to use another one you can define it in Controller:
-
-```php
-
-protected string $Model = "ShowUser";
+### 3. Klasor Yapisi
 
 ```
-
-there are four methods for CRUD that you have access in model.
-
-how to select:
-
-```php
- public function getUsers()
- {
-    $Query = "SELECT * FROM users WHERE is_active = ? AND id != ?";
-    $Data = [
-        1,
-        5
-    ];
-    return $this->InsertRow($Query,$Data);
- }
-```
-and other methods:
-```php
-$this->SelectRow($Query,$Data);
-$this->UpdateRow($Query,$Data);
-$this->DeleteRow($Query,$Data);
-```
-
-
-## Helper functions
-
-#### view()
-
-loads a view file from `View`:
-
-```php
-view('dashboard/profile'); // require View/dashboard/profile.php
+hammadde-takip/
+├── ajax/                   # AJAX islemleri
+├── database/              
+│   ├── schema.sql         # Veritabani semasi
+│   └── sample_data.sql    # Ornek veriler
+├── includes/
+│   ├── config.php         # Ana config
+│   ├── functions.php      # Fonksiyonlar
+│   ├── header.php         # Header sablonu
+│   └── footer.php         # Footer sablonu
+├── index.php              # Ana liste
+├── login.php              # Giris
+├── logout.php             # Cikis
+├── hammadde-form.php      # Ekle/Duzenle
+├── hammadde-detay.php     # Detay
+├── ihtiyac.php            # Ihtiyac listesi
+├── siparisler.php         # Siparisler
+├── fiyatlar.php           # Fiyat tablosu
+├── karsilastirma.php      # Karsilastirma
+└── stok-guncelle.php      # Stok guncelleme
 ```
 
-you can pass data to view by `compact()` inner function.
+## Kullanim
 
-```php
-$Users = ['Milad','Ali']; // Data
+### Varsayilan Giris Bilgileri
+- **Kullanici Adi:** admin
+- **Sifre:** admin123
 
-view('dashboard/profile',compact('Users'));
+⚠️ **Güvenlik:** Üretim ortaminda sifreyi degistirin!
 
-// or
+### Hammadde Ekleme
+1. Sag ustte "Yeni Hammadde" butonuna tiklayin
+2. Zorunlu alanlari doldurun (S/K, Hammadde Ismi)
+3. Termin surelerini girin
+4. Fiyat bilgilerini ekleyin
+5. Tuketim verilerini yil/ay bazinda girin
+6. "Kaydet" butonuna tiklayin
 
-view('dashboard/profile',['users'=>$Users])
-```
+### Stok Guncelleme
+1. "Stok Guncelle" menusune gidin
+2. Yeni stok miktarlarini girin
+3. Guncel ay tuketimini girin
+4. "Tum Degisiklikleri Kaydet" butonuna tiklayin
 
-then you can access data in view:
+### Ihtiyac Listesi
+- Otomatik olarak kritik stok seviyesindeki hammaddeleri listeler
+- Stok/Termin orani < 2 olan hammaddeleri gosterir
+- Acil siparis, Siparis Ver, Takipte durumlarini renklendirir
 
-```php
-<?php foreach ($Users as $User): ?>
-    <tr>
-        <td><?=$User?></td>
-    </tr>
-<?php endforeach; ?>
-```
+## Teknik Detaylar
 
-<br>
+### Veritabani Tablolari
+- **users:** Kullanicilar
+- **hammaddeler:** Hammadde ana tablosu
+- **tuketim_verileri:** Aylik tuketim verileri
+- **termin_sureleri:** Termin sureleri (4 asama)
+- **fiyat_gecmisi:** Fiyat degisiklik kayitlari
+- **siparisler:** Siparis kayitlari
+- **doviz_kurlari:** Doviz kuru cache
+- **hammadde_turleri, ulkeler, paketleme_tipleri, teslimat_sekilleri, para_birimleri:** Referans tablolari
 
-#### redirect()
+### Güvenlik
+- Session yonetimi (1 hafta)
+- XSS korumasi (htmlspecialchars)
+- SQL injection korumasi (PDO prepared statements)
+- CSRF token destegi (hazir)
 
-redirect to route by passing route name or url:
+### Performans
+- Index'ler optimizasyon icin eklenmistir
+- Doviz kurlari cache'lenir (6 saat)
 
-```php
-redirect('index'); // redirects to index route
+## Lisans
 
-redirect('/dashboard/profile');
-```
+Bu proje MIT lisansi ile lisanslanmistir.
 
-if route has parameter, you can pass it as in route function
+## Gelistirici
 
-```php
-redirect('show_user', ['id' => 1 ]);
-```
-
-<br>
-
-#### public_dir()
-
-it returns string of file and public dir that defined in `config.php`:
-
-```php
-echo public_dir('style.css'); // http://localhost/public/style.css
-```
-
-<br>
-
-#### abort()
-
-this function abort execution with given status code.
-
-you can define view for it in `Views/errors`.
-
-<br>
-
-#### dd()
-
-it will die and dump what ever you give it.
-
-```php
-dd("hi"); // string(2) "hi"
-```
-
-
-# Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-For any issue or feature request, please open an issue.
-
-# License
-
-[MIT License](https://choosealicense.com/licenses/mit/)
+Hammadde Takip Sistemi v1.0
