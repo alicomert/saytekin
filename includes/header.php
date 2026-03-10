@@ -222,7 +222,9 @@ $kurlar = getDovizKurlari();
         .nav-btn.active-siparisler { border-color: #34d399; background: #0d2018; color: #34d399; }
         .nav-btn.active-fiyatlar { border-color: #a78bfa; background: #1a1535; color: #a78bfa; }
         .nav-btn.active-karsilastirma { border-color: #10b981; background: #0d2018; color: #10b981; }
+        .nav-btn.active-istatistik { border-color: #8b5cf6; background: #1e1535; color: #a78bfa; }
         .nav-btn.active-stokguncelle { border-color: #38bdf8; background: #0c1f2e; color: #38bdf8; }
+        .nav-btn.active-sabit { border-color: #64748b; background: #1e293b; color: #94a3b8; }
         
         .badge {
             background: #ef4444;
@@ -347,6 +349,10 @@ $kurlar = getDovizKurlari();
                 ['url' => 'stok-guncelle.php', 'key' => 'stokguncelle', 'label' => '🔄 Stok Güncelleme', 'page' => 'stok-guncelle'],
             ];
             
+            if (isAdmin()) {
+                $navItems[] = ['url' => 'sabit-tanimlar.php', 'key' => 'sabit', 'label' => '⚙️ Sabit Tanımlar', 'page' => 'sabit-tanimlar'];
+            }
+            
             foreach ($navItems as $nav):
                 $isActive = strpos($_SERVER['PHP_SELF'], $nav['page']) !== false;
                 $activeClass = $isActive ? 'active-' . $nav['key'] : '';
@@ -376,9 +382,6 @@ $kurlar = getDovizKurlari();
             <a href="index.php" class="btn-secondary">← Listeye Dön</a>
             <?php endif; ?>
             
-            <?php if (isAdmin()): ?>
-            <a href="sabit-tanimlar.php" class="nav-btn" style="margin-left: 12px;">⚙️ Sabit Tanımlar</a>
-            <?php endif; ?>
             <a href="logout.php" class="btn-secondary" style="margin-left: 12px;">Çıkış</a>
         </div>
     </div>
