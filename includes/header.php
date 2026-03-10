@@ -335,7 +335,7 @@ $kurlar = getDovizKurlari();
                 <div style="font-size:10;color:#475569;letter-spacing:0.06em;">VERİ GİRİŞ SİSTEMİ</div>
             </div>
         </div>
-        <div style="display:flex;align-items:center;gap:20px;">
+        <div style="display:flex;align-items:center;gap:16px;">
             <?php
             $navItems = [
                 ['url' => 'index.php', 'key' => 'liste', 'label' => '📋 Tüm Liste', 'page' => 'index'],
