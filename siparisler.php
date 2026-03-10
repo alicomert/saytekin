@@ -12,20 +12,20 @@ if ($sipTab === 'aktif') {
     $siparisler = $db->query("SELECT s.*, h.hammadde_ismi, h.stok_kodu, h.tur_kodu, h.tedarikci, h.para_birimi_kodu, h.fiyat_birimi, h.birim_fiyat, h.maliyet_tipi, h.maliyet_deger, h.teslimat_sekli_kodu
         FROM siparisler s
         JOIN hammaddeler h ON s.hammadde_id = h.id
-        WHERE s.is_active = 1 AND s.geldi = 0
+        WHERE s.geldi = 0
         ORDER BY s.tarih DESC")
         ->fetchAll();
 } else {
     $siparisler = $db->query("SELECT s.*, h.hammadde_ismi, h.stok_kodu, h.tur_kodu, h.tedarikci, h.para_birimi_kodu, h.fiyat_birimi, h.birim_fiyat, h.maliyet_tipi, h.maliyet_deger, h.teslimat_sekli_kodu
         FROM siparisler s
         JOIN hammaddeler h ON s.hammadde_id = h.id
-        WHERE s.is_active = 1 AND s.geldi = 1
+        WHERE s.geldi = 1
         ORDER BY s.tarih DESC")
         ->fetchAll();
 }
 
 $kurlar = getDovizKurlari();
-$toplamAktif = $db->query("SELECT COUNT(*) as c FROM siparisler WHERE is_active = 1 AND geldi = 0")->fetch()['c'] ?? 0;
+$toplamAktif = $db->query("SELECT COUNT(*) as c FROM siparisler WHERE geldi = 0")->fetch()['c'] ?? 0;
 ?>
 
 <style>
