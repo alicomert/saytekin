@@ -735,6 +735,21 @@ function createBackup() {
     $stmt = $db->prepare("INSERT INTO update_logs (action, details, created_at) VALUES ('backup', ?, NOW())");
     $stmt->execute([json_encode(['files' => $backedUpFiles, 'backup_dir' => $backupDir])]);
     
+    // Eski yedekleri sil - sadece son 1 yedek kalsın
+    $backupBase = __DIR__ . '/../backups/';
+    $allBackups = glob($backupBase . '*', GLOB_ONLYDIR);
+    if (count($allBackups) > 1) {
+        // Tarihe göre sırala (en yeni en üstte)
+        usort($allBackups, function($a, $b) {
+            return filemtime($b) - filemtime($a);
+        });
+        
+        // İlk hariç tümünü sil
+        for ($i = 1; $i < count($allBackups); $i++) {
+            removeDirectory($allBackups[$i]);
+        }
+    }
+    
     return $backupDir;
 }
 
@@ -820,16 +835,12 @@ function extractAndApplyUpdate($zipFile) {
 function applyDatabaseMigrations() {
     $db = getDB();
     
-    // Migration tablosu yoksa oluştur (prepare/execute kullanarak)
-    try {
-        $db->exec("CREATE TABLE IF NOT EXISTS schema_migrations (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            filename VARCHAR(255) NOT NULL UNIQUE,
-            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )");
-    } catch (PDOException $e) {
-        return ['success' => false, 'errors' => ['Migration tablosu oluşturulamadı: ' . $e->getMessage()]];
-    }
+    // Migration tablosu yoksa oluştur
+    $db->exec("CREATE TABLE IF NOT EXISTS schema_migrations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        filename VARCHAR(255) NOT NULL UNIQUE,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
     
     // Database klasöründeki migration dosyalarını kontrol et
     $migrationDir = __DIR__ . '/../Database/';
@@ -843,16 +854,10 @@ function applyDatabaseMigrations() {
     $applied = [];
     $errors = [];
     
-    // Önce uygulanmış migration'ları al
-    $appliedMigrations = [];
-    try {
-        $result = $db->query("SELECT filename FROM schema_migrations");
-        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            $appliedMigrations[] = $row['filename'];
-        }
-    } catch (PDOException $e) {
-        // Tablo boş olabilir, devam et
-    }
+    // Önce tüm uygulanmış migration'ları getir
+    $stmt = $db->query("SELECT filename FROM schema_migrations");
+    $appliedMigrations = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $stmt->closeCursor();
     
     foreach ($files as $file) {
         $filename = basename($file);
@@ -862,26 +867,39 @@ function applyDatabaseMigrations() {
             continue;
         }
         
-        // SQL'i oku ve çalıştır
+        // SQL'i oku
         $sql = file_get_contents($file);
         
+        // SQL statement'ları ayrıştır
+        $sql = preg_replace('/\/\*[\s\S]*?\*\//', '', $sql);
+        $sql = preg_replace('/--.*$/m', '', $sql);
+        
+        // Statement'ları böl
+        $statements = array_filter(array_map('trim', preg_split('/;\s*\n/', $sql)));
+        
+        $fileSuccess = true;
+        $fileError = '';
+        
         try {
-            // Transaction başlat
             $db->beginTransaction();
             
-            // SQL'i çalıştır (multi-statement)
-            $db->exec($sql);
+            foreach ($statements as $statement) {
+                if (empty($statement)) continue;
+                
+                $stmt = $db->prepare($statement);
+                $stmt->execute();
+                $stmt->closeCursor();
+            }
             
             // Migration kaydını ekle
             $stmt = $db->prepare("INSERT INTO schema_migrations (filename) VALUES (?)");
             $stmt->execute([$filename]);
+            $stmt->closeCursor();
             
-            // Transaction commit
             $db->commit();
-            
             $applied[] = $filename;
+            
         } catch (Exception $e) {
-            // Rollback
             if ($db->inTransaction()) {
                 $db->rollBack();
             }

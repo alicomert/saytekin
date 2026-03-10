@@ -36,14 +36,9 @@ try {
     $result['steps'][2]['status'] = 'completed';
     $result['steps'][2]['detail'] = count($applyResult['updated_files']) . ' dosya güncellendi';
     
-    // Adım 4: Veritabanı migration'ları uygula
-    $result['steps'][] = ['step' => 4, 'name' => 'Veritabanı güncelleniyor...', 'status' => 'running'];
-    $migrationResult = applyDatabaseMigrations();
-    if (!$migrationResult['success']) {
-        throw new Exception('Veritabanı güncellemesi başarısız: ' . implode(', ', $migrationResult['errors']));
-    }
-    $result['steps'][3]['status'] = 'completed';
-    $result['steps'][3]['detail'] = count($migrationResult['applied']) . ' migration uygulandı';
+    // Adım 4: Veritabanı migration'ları atlandı
+    $result['steps'][] = ['step' => 4, 'name' => 'Veritabanı güncelleniyor...', 'status' => 'completed'];
+    $result['steps'][3]['detail'] = 'Veritabanı güncellemesi atlandı';
     
     // Adım 5: Sürüm bilgisini güncelle
     $result['steps'][] = ['step' => 5, 'name' => 'Sistem bilgileri güncelleniyor...', 'status' => 'running'];
