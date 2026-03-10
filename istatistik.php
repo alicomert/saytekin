@@ -130,61 +130,76 @@ foreach ($turler as $tur) {
     });
     
     if (count($turHammaddeler) > 0) {
-        $ort2025 = 0;
-        $ort2024 = 0;
-        $s12 = 0;
+        // Tüm yıllar için ortalama hesapla
+        $yilOrtalamalari = [];
+        foreach ($YILLAR as $yil) {
+            $yilOrtalamalari[$yil] = 0;
+            foreach ($turHammaddeler as $h) {
+                $yilOrtalamalari[$yil] += hesaplaOrt($tuketimVerileri[$h['id']], $yil);
+            }
+        }
         
+        $s12 = 0;
         foreach ($turHammaddeler as $h) {
-            $ort2025 += hesaplaOrt($tuketimVerileri[$h['id']], 2025);
-            $ort2024 += hesaplaOrt($tuketimVerileri[$h['id']], 2024);
             $s12 += son12AyOrt($tuketimVerileri[$h['id']]);
         }
         
-        $turStats[] = [
+        $turStats[] = array_merge([
             'tur' => $tur['kod'],
             'sayi' => count($turHammaddeler),
-            'ort2025' => $ort2025,
-            'ort2024' => $ort2024,
             's12' => $s12
-        ];
+        ], $yilOrtalamalari);
     }
 }
 
-// 2025'e göre sırala
-usort($turStats, function($a, $b) {
-    return $b['ort2025'] <=> $a['ort2025'];
+// Son yıla göre sırala
+$sonYil = end($YILLAR);
+usort($turStats, function($a, $b) use ($sonYil) {
+    return $b[$sonYil] <=> $a[$sonYil];
 });
 
 // Hammadde bazlı istatistik
 $hammaddeStats = [];
 foreach ($hammaddeler as $h) {
-    $o23 = hesaplaOrt($tuketimVerileri[$h['id']], 2023);
-    $o24 = hesaplaOrt($tuketimVerileri[$h['id']], 2024);
-    $o25 = hesaplaOrt($tuketimVerileri[$h['id']], 2025);
+    // Tüm yıllar için ortalama hesapla
+    $yilOrtalamalari = [];
+    foreach ($YILLAR as $yil) {
+        $key = 'o' . substr($yil, -2);
+        $yilOrtalamalari[$key] = hesaplaOrt($tuketimVerileri[$h['id']], $yil);
+    }
+    
     $s12 = son12AyOrt($tuketimVerileri[$h['id']]);
     $s3 = son3AyOrt($tuketimVerileri[$h['id']]);
-    $trend = $o24 > 0 ? (($o25 - $o24) / $o24 * 100) : null;
     
-    $hammaddeStats[] = [
+    // Trend hesapla (son iki yıl arası)
+    $sonIkiYil = array_slice($YILLAR, -2);
+    if (count($sonIkiYil) >= 2) {
+        $oncekiYilKey = 'o' . substr($sonIkiYil[0], -2);
+        $sonYilKey = 'o' . substr($sonIkiYil[1], -2);
+        $trend = $yilOrtalamalari[$oncekiYilKey] > 0 ? 
+            (($yilOrtalamalari[$sonYilKey] - $yilOrtalamalari[$oncekiYilKey]) / $yilOrtalamalari[$oncekiYilKey] * 100) : null;
+    } else {
+        $trend = null;
+    }
+    
+    $hammaddeStats[] = array_merge([
         'id' => $h['id'],
         'hammadde_ismi' => $h['hammadde_ismi'],
         'tur_kodu' => $h['tur_kodu'],
         'tedarikci' => $h['tedarikci'],
-        'o23' => $o23,
-        'o24' => $o24,
-        'o25' => $o25,
         's12' => $s12,
         's3' => $s3,
         'trend' => $trend
-    ];
+    ], $yilOrtalamalari);
 }
 
-// 2025 ortalamasına göre sırala
-usort($hammaddeStats, function($a, $b) {
-    return $b['o25'] <=> $a['o25'];
+// Son yıl ortalamasına göre sırala
+$sonYilKey = 'o' . substr(end($YILLAR), -2);
+usort($hammaddeStats, function($a, $b) use ($sonYilKey) {
+    return $b[$sonYilKey] <=> $a[$sonYilKey];
 });
 
-$maxO25 = !empty($hammaddeStats) ? max(array_column($hammaddeStats, 'o25')) : 0;
+$maxSonYil = !empty($hammaddeStats) ? max(array_column($hammaddeStats, $sonYilKey)) : 0;
 
 ?>
 
@@ -201,7 +216,7 @@ $maxO25 = !empty($hammaddeStats) ? max(array_column($hammaddeStats, 'o25')) : 0;
             ['label' => 'Toplam Hammadde (S)', 'val' => count($hammaddeler) . ' kalem', 'renk' => '#3b82f6', 'bg' => '#1d3557', 'icon' => '📦'],
             ['label' => 'Toplam Stok', 'val' => N($toplamStok) . ' kg', 'renk' => '#10b981', 'bg' => '#0d2018', 'icon' => '🏭'],
             ['label' => 'İhtiyaç Durumunda', 'val' => $ihtiyacSay . ' kalem', 'renk' => '#f59e0b', 'bg' => '#2a1f0a', 'icon' => '⚠️'],
-            ['label' => date('Y') . ' Aylık Ort. Toplam', 'val' => N($yilOrtToplamlar[date('Y')] ?? 0), 'renk' => '#8b5cf6', 'bg' => '#1e1535', 'icon' => '📈'],
+            ['label' => end($YILLAR) . ' Aylık Ort. Toplam', 'val' => N($yilOrtToplamlar[end($YILLAR)] ?? 0), 'renk' => '#8b5cf6', 'bg' => '#1e1535', 'icon' => '📈'],
         ];
         foreach ($kartlar as $k):
         ?>
@@ -264,23 +279,39 @@ $maxO25 = !empty($hammaddeStats) ? max(array_column($hammaddeStats, 'o25')) : 0;
                     <tr style="border-bottom:1px solid #1e2430;">
                         <th style="padding:9px 14px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;">Tür</th>
                         <th style="padding:9px 14px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;">Kalem</th>
-                        <th style="padding:9px 14px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;">2024 Ort./Ay</th>
-                        <th style="padding:9px 14px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;">2025 Ort./Ay</th>
+                        <?php 
+                        // Son 2 yılı göster
+                        $sonIkiYil = array_slice($YILLAR, -2);
+                        foreach ($sonIkiYil as $yil): 
+                        ?>
+                        <th style="padding:9px 14px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;"><?php echo $yil; ?> Ort./Ay</th>
+                        <?php endforeach; ?>
                         <th style="padding:9px 14px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;">Son 12 Ay Ort.</th>
                         <th style="padding:9px 14px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;">Trend</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($turStats as $t): 
-                        $trend = $t['ort2024'] > 0 ? (($t['ort2025'] - $t['ort2024']) / $t['ort2024'] * 100) : null;
+                        // Trend hesapla (son 2 yıl arası)
+                        $trend = null;
+                        if (count($sonIkiYil) >= 2) {
+                            $oncekiYil = $sonIkiYil[0];
+                            $sonYil = $sonIkiYil[1];
+                            $trend = $t[$oncekiYil] > 0 ? (($t[$sonYil] - $t[$oncekiYil]) / $t[$oncekiYil] * 100) : null;
+                        }
+                        $yilRenkler = [
+                            $sonIkiYil[0] ?? null => '#a78bfa',
+                            $sonIkiYil[1] ?? null => '#34d399'
+                        ];
                     ?>
                     <tr style="border-bottom:1px solid #1e2430;"
                         onMouseEnter="this.style.background='#1a2130'"
                         onMouseLeave="this.style.background='transparent'">
                         <td style="padding:11px 14px;"><span style="background:#1e2430;padding:3px 10px;border-radius:4px;font-size:12px;color:#94a3b8;font-weight:700;"><?php echo htmlspecialchars($t['tur']); ?></span></td>
                         <td style="padding:11px 14px;color:#64748b;font-size:12px;"><?php echo $t['sayi']; ?></td>
-                        <td style="padding:11px 14px;color:#a78bfa;font-size:13px;font-family:monospace;font-weight:600;"><?php echo N($t['ort2024']); ?></td>
-                        <td style="padding:11px 14px;color:#34d399;font-size:13px;font-family:monospace;font-weight:600;"><?php echo N($t['ort2025']); ?></td>
+                        <?php foreach ($sonIkiYil as $yil): ?>
+                        <td style="padding:11px 14px;color:<?php echo $yilRenkler[$yil]; ?>;font-size:13px;font-family:monospace;font-weight:600;"><?php echo N($t[$yil]); ?></td>
+                        <?php endforeach; ?>
                         <td style="padding:11px 14px;color:#fbbf24;font-size:13px;font-family:monospace;font-weight:600;"><?php echo N($t['s12']); ?></td>
                         <td style="padding:11px 14px;">
                             <?php if ($trend !== null): ?>
@@ -299,7 +330,7 @@ $maxO25 = !empty($hammaddeStats) ? max(array_column($hammaddeStats, 'o25')) : 0;
 
     <!-- Hammadde bazlı istatistikler -->
     <div style="background:#141820;border:1px solid #1e2430;border-radius:12px;padding:20px;">
-        <div style="font-size:12px;font-weight:700;letter-spacing:0.1em;color:#64748b;margin-bottom:16px;text-transform:uppercase;">Hammadde Bazlı Tüketim İstatistikleri (<?php echo date('Y'); ?> tüketimine göre sıralı)</div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.1em;color:#64748b;margin-bottom:16px;text-transform:uppercase;">Hammadde Bazlı Tüketim İstatistikleri (<?php echo end($YILLAR); ?> tüketimine göre sıralı)</div>
         <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;min-width:900px;">
                 <thead>
@@ -318,7 +349,7 @@ $maxO25 = !empty($hammaddeStats) ? max(array_column($hammaddeStats, 'o25')) : 0;
                 <tbody>
                     <?php foreach ($hammaddeStats as $m):
                         $trendRenk = is_null($m['trend']) ? '#64748b' : ($m['trend'] > 10 ? '#34d399' : ($m['trend'] < -10 ? '#f87171' : '#fbbf24'));
-                        $barYuzde = $maxO25 > 0 ? round($m['o25'] / $maxO25 * 100) : 0;
+                        $barYuzde = $maxSonYil > 0 ? round($m[$sonYilKey] / $maxSonYil * 100) : 0;
                     ?>
                     <tr style="border-bottom:1px solid #1e2430;"
                         onMouseEnter="this.style.background='#1a2130'"
@@ -334,7 +365,7 @@ $maxO25 = !empty($hammaddeStats) ? max(array_column($hammaddeStats, 'o25')) : 0;
                             $deger = $m['o' . substr($yil, -2)];
                             $renk = $YIL_RENKLER[$yil]['text'] ?? '#94a3b8';
                         ?>
-                        <td style="padding:10px 12px;color:<?php echo $renk; ?>;font-size:12px;font-family:monospace;text-align:right;<?php echo $yil == date('Y') ? 'font-weight:700;' : ''; ?>"><?php echo N($deger); ?></td>
+                        <td style="padding:10px 12px;color:<?php echo $renk; ?>;font-size:12px;font-family:monospace;text-align:right;<?php echo $yil == end($YILLAR) ? 'font-weight:700;' : ''; ?>"><?php echo N($deger); ?></td>
                         <?php endforeach; ?>
                         <td style="padding:10px 12px;color:#fbbf24;font-size:12px;font-family:monospace;text-align:right;"><?php echo $m['s12'] > 0 ? N($m['s12']) : '—'; ?></td>
                         <td style="padding:10px 12px;color:#fb923c;font-size:12px;font-family:monospace;text-align:right;"><?php echo $m['s3'] > 0 ? N($m['s3']) : '—'; ?></td>
