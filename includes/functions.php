@@ -88,6 +88,49 @@ function getTuketimOrtalama($hammadde_id, $yil) {
     return $result['ortalama'] ?: 0;
 }
 
+function getTuketimYillari() {
+    $db = getDB();
+    
+    $stmt = $db->query("SELECT DISTINCT yil FROM tuketim_verileri WHERE miktar_kg IS NOT NULL AND miktar_kg > 0 ORDER BY yil ASC");
+    $yillar = [];
+    while ($row = $stmt->fetch()) {
+        $yillar[] = (int)$row['yil'];
+    }
+    
+    if (empty($yillar)) {
+        $yillar = [date('Y') - 2, date('Y') - 1, date('Y')];
+    }
+    
+    return $yillar;
+}
+
+function getSonGirilenAy() {
+    $db = getDB();
+    
+    $stmt = $db->query("SELECT yil, ay FROM tuketim_verileri WHERE miktar_kg IS NOT NULL AND miktar_kg > 0 ORDER BY yil DESC, ay DESC LIMIT 1");
+    $row = $stmt->fetch();
+    
+    if ($row) {
+        return [
+            'yil' => (int)$row['yil'],
+            'ay' => (int)$row['ay']
+        ];
+    }
+    
+    return [
+        'yil' => date('Y'),
+        'ay' => date('n')
+    ];
+}
+
+function getSonrakiAy($yil, $ay) {
+    if ($ay < 12) {
+        return ['yil' => $yil, 'ay' => $ay + 1];
+    } else {
+        return ['yil' => $yil + 1, 'ay' => 1];
+    }
+}
+
 function getSon12AyOrtalama($hammadde_id) {
     $db = getDB();
     
@@ -466,4 +509,32 @@ function getFiyatGecmisi($hammadde_id) {
                           ORDER BY fg.kayit_tarihi DESC");
     $stmt->execute([$hammadde_id]);
     return $stmt->fetchAll();
+}
+
+function saveFiyatGecmisi($hammadde_id, $fiyat) {
+    $db = getDB();
+    
+    $stmt = $db->prepare("INSERT INTO fiyat_gecmisi (
+        hammadde_id, birim_fiyat, para_birimi_kodu, fiyat_birimi,
+        teslimat_sekli_kodu, maliyet_tipi, maliyet_deger, maliyet_pb_kodu, maliyet_turu, kayit_tarihi
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
+    $stmt->execute([
+        $hammadde_id,
+        $fiyat['birim_fiyat'] ?? 0,
+        $fiyat['para_birimi_kodu'] ?? 'USD',
+        $fiyat['fiyat_birimi'] ?? 'ton',
+        $fiyat['teslimat_sekli_kodu'] ?? null,
+        $fiyat['maliyet_tipi'] ?? null,
+        $fiyat['maliyet_deger'] ?? null,
+        $fiyat['maliyet_pb_kodu'] ?? null,
+        $fiyat['maliyet_turu'] ?? 'T',
+        date('Y-m-d')
+    ]);
+}
+
+function deleteFiyatGecmisi($id) {
+    $db = getDB();
+    $stmt = $db->prepare("DELETE FROM fiyat_gecmisi WHERE id = ?");
+    $stmt->execute([$id]);
 }

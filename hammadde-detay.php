@@ -651,7 +651,7 @@ $PAKETLEME_TIPLERI = [
                             <span style="font-weight:700;font-size:12px;color:<?php echo $farkYuzde > 0 ? '#ef4444' : '#34d399'; ?>;
                                 background:<?php echo $farkYuzde > 0 ? '#ef444422' : '#10b98122'; ?>;
                                 padding:3px 8px;border-radius:4px;">
-                                <?php echo $farkYuzde > 0 ? '▲ ' : '▼ '; ?><?php echo abs($farkYuzde); ?>%
+                                <?php echo $farkYuzde > 0 ? '▲ ' : '▼ '; echo abs($farkYuzde); ?>%
                             </span>
                             <?php else: ?>—<?php endif; ?>
                         </td>

@@ -6,7 +6,7 @@ $pageTitle = 'İhtiyaç Listesi';
 $db = getDB();
 
 // Siparişleri al
-$siparisler = $db->query("SELECT * FROM siparisler WHERE is_active = 1 AND geldi = 0")->fetchAll();
+$siparisler = $db->query("SELECT * FROM siparisler WHERE geldi = 0")->fetchAll();
 $siparisByHammadde = [];
 foreach ($siparisler as $s) {
     $siparisByHammadde[$s['hammadde_id']] = $s;

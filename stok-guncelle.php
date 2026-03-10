@@ -3,8 +3,13 @@ require_once 'includes/header.php';
 
 $pageTitle = 'Stok Güncelleme';
 
-$buYil = date('Y');
-$buAy = date('n');
+// Dinamik olarak son girilen ay/yili bul ve sonrakini hesapla
+$sonGirilen = getSonGirilenAy();
+$sonrakiAy = getSonrakiAy($sonGirilen['yil'], $sonGirilen['ay']);
+
+$buYil = $sonrakiAy['yil'];
+$buAy = $sonrakiAy['ay'];
+
 $aylar = [1=>'Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 $ayAd = $aylar[$buAy];
 

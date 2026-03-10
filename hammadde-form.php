@@ -94,6 +94,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (empty($errors)) {
+        // Fiyat degisikligini kontrol et ve gecmisi kaydet
+        $kaydedilecekId = $isEdit ? $id : $newId;
+        
+        if ($isEdit && !empty($hammadde) && $hammadde['birim_fiyat'] > 0) {
+            $eskiFiyat = $hammadde['birim_fiyat'];
+            $yeniFiyat = $formData['birim_fiyat'];
+            $eskiPb = $hammadde['para_birimi_kodu'] ?? 'USD';
+            $yeniPb = $formData['para_birimi_kodu'];
+            $eskiTl = $hammadde['teslimat_sekli_kodu'] ?? 'CIF';
+            $yeniTl = $formData['teslimat_sekli_kodu'];
+            $eskiMt = $hammadde['maliyet_tipi'] ?? 'yuzde';
+            $yeniMt = $formData['maliyet_tipi'];
+            $eskiMd = $hammadde['maliyet_deger'] ?? 0;
+            $yeniMd = $formData['maliyet_deger'];
+            
+            // Fiyat, para birimi, teslimat sekli veya maliyet degisdiyse kaydet
+            if ($eskiFiyat != $yeniFiyat || $eskiPb != $yeniPb || $eskiTl != $yeniTl || 
+                $eskiMt != $yeniMt || $eskiMd != $yeniMd) {
+                saveFiyatGecmisi($id, [
+                    'birim_fiyat' => $eskiFiyat,
+                    'para_birimi_kodu' => $eskiPb,
+                    'fiyat_birimi' => $hammadde['fiyat_birimi'] ?? 'ton',
+                    'teslimat_sekli_kodu' => $eskiTl,
+                    'maliyet_tipi' => $eskiMt,
+                    'maliyet_deger' => $eskiMd,
+                    'maliyet_pb_kodu' => $hammadde['maliyet_pb_kodu'] ?? null,
+                    'maliyet_turu' => $hammadde['maliyet_turu'] ?? 'T'
+                ]);
+            }
+        }
+        
         // Hammaddeyi kaydet
         $newId = saveHammadde($formData, $id);
         
@@ -131,6 +162,25 @@ $YIL_RENKLER = [
 ];
 
 $Aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
+// YILLAR - SADECE veritabanindaki yilları göster (dinamik)
+$yillar = getTuketimYillari();
+if (empty($yillar)) {
+    $yillar = [date('Y')];
+}
+$yillArray = $yillar;
+
+// Yil renkleri - dinamik olarak olustur
+$renkler = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#06b6d4'];
+$YIL_RENKLER = [];
+foreach ($yillArray as $idx => $yil) {
+    $YIL_RENKLER[$yil] = [
+        'bg' => '#1a2535',
+        'border' => $renkler[$idx % count($renkler)],
+        'text' => $renkler[$idx % count($renkler)],
+        'dot' => $renkler[$idx % count($renkler)]
+    ];
+}
 ?>
 
 <style>
@@ -237,7 +287,7 @@ input:focus, select:focus { outline: none; border-color: #3b82f6 !important; box
                 <!-- Tedarikci -->
                 <div>
                     <label class="field-label">Tedarikçi</label>
-                    <input type="text" name="tedarikci" value="<?php echo htmlspecialchars($formData['tedarikci']); ?>" 
+                    <input type="text" name="tedarikci" value="<?php echo htmlspecialchars($formData['tedarikci'] ?? ''); ?>" 
                         class="field-input" placeholder="ör: MATEL A.Ş.">
                 </div>
             </div>
@@ -473,16 +523,16 @@ input:focus, select:focus { outline: none; border-color: #3b82f6 !important; box
             </div>
             
             <!-- Yıl Sekmeleri -->
-            <div style="display: flex; gap: 8; margin-bottom: 18px; margin-top: 16px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 18px; margin-top: 16px;">
                 <?php 
-                $aktifYil = 2025;
-                foreach (YILLAR as $yil): 
-                    $renk = $YIL_RENKLER[$yil];
+                $aktifYil = !empty($yillArray) ? end($yillArray) : date('Y');
+                foreach ($yillArray as $yil): 
+                    $renk = $YIL_RENKLER[$yil] ?? ['bg' => '#1a2535', 'border' => '#64748b', 'text' => '#94a3b8', 'dot' => '#64748b'];
                     $isActive = $yil == $aktifYil;
                     
                     // Yıl ortalamasını hesapla
                     $yilVeriler = [];
-                    foreach (AYLAR as $ayNo => $ayAd) {
+                    foreach ($Aylar as $ayNo => $ayAd) {
                         if (!empty($tuketimVerileri[$yil][$ayNo])) {
                             $yilVeriler[] = $tuketimVerileri[$yil][$ayNo];
                         }
@@ -501,8 +551,8 @@ input:focus, select:focus { outline: none; border-color: #3b82f6 !important; box
                 <?php endforeach; ?>
             </div>
             
-            <?php foreach (YILLAR as $yil): 
-                $renk = $YIL_RENKLER[$yil];
+            <?php foreach ($yillArray as $yil): 
+                $renk = $YIL_RENKLER[$yil] ?? ['bg' => '#1a2535', 'border' => '#64748b', 'text' => '#94a3b8', 'dot' => '#64748b'];
                 $isActive = $yil == $aktifYil;
             ?>
             <div id="yil_<?php echo $yil; ?>" class="yil-content" style="<?php echo $isActive ? '' : 'display: none;'; ?>">
@@ -511,7 +561,7 @@ input:focus, select:focus { outline: none; border-color: #3b82f6 !important; box
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
-                    <?php foreach (AYLAR as $ayNo => $ayAd): 
+                    <?php foreach ($Aylar as $ayNo => $ayAd): 
                         $miktar = $tuketimVerileri[$yil][$ayNo] ?? '';
                     ?>
                     <div>
@@ -523,10 +573,10 @@ input:focus, select:focus { outline: none; border-color: #3b82f6 !important; box
                 </div>
                 
                 <!-- Yıl özeti -->
-                <div style="margin-top: 16px; background: #0f1117; border-radius: 8px; padding: 12px 16px; display: flex; gap: 24; flex-wrap: wrap;">
+                <div style="margin-top: 16px; background: #0f1117; border-radius: 8px; padding: 12px 16px; display: flex; gap: 24px; flex-wrap: wrap;">
                     <?php
                     $yilVeriler = [];
-                    foreach (AYLAR as $ayNo => $ayAd) {
+                    foreach ($Aylar as $ayNo => $ayAd) {
                         if (!empty($tuketimVerileri[$yil][$ayNo])) {
                             $yilVeriler[] = $tuketimVerileri[$yil][$ayNo];
                         }
@@ -599,10 +649,9 @@ function toggleAlternatif(value) {
 // Yil goster/gizle
 function showYil(yil) {
     const yilRenkler = {
-        2023: {bg:'#1a2535', border:'#3b82f6', text:'#60a5fa', dot:'#3b82f6'},
-        2024: {bg:'#1a2535', border:'#8b5cf6', text:'#a78bfa', dot:'#8b5cf6'},
-        2025: {bg:'#1a2535', border:'#10b981', text:'#34d399', dot:'#10b981'},
-        2026: {bg:'#1a2535', border:'#f59e0b', text:'#fbbf24', dot:'#f59e0b'}
+        <?php foreach ($yillArray as $yil): ?>
+        <?php echo $yil; ?>: {bg:'#1a2535', border:'<?php echo ($YIL_RENKLER[$yil]['border'] ?? '#64748b'); ?>', text:'<?php echo ($YIL_RENKLER[$yil]['text'] ?? '#94a3b8'); ?>', dot:'<?php echo ($YIL_RENKLER[$yil]['dot'] ?? '#64748b'); ?>'},
+        <?php endforeach; ?>
     };
     
     // Tum yil content'lerini gizle

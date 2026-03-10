@@ -269,7 +269,7 @@ $kurlar = getDovizKurlari();
     <?php if (isLoggedIn()): ?>
     <!-- Döviz Kur Bandı -->
     <?php if ($kurlar): ?>
-    <div style="background:#0a0e15;border-bottom:1px solid #1e2430;padding:5px 24px;display:flex;gap:20;font-size:11;overflow-x:auto;">
+    <div style="background:#0a0e15;border-bottom:1px solid #1e2430;padding:5px 24px;display:flex;gap:20px;font-size:11px;overflow-x:auto;">
         <?php
         $kurItems = [
             ['label' => 'USD/TRY', 'val' => $kurlar['USD_TRY'] ?? 0, 'renk' => '#60a5fa'],
