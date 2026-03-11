@@ -384,7 +384,7 @@ $kurlar = getDovizKurlari();
         $kurKaynagi = isset($kurlar['kaynak']) ? $kurlar['kaynak'] : 'TCMB';
         $kurTarihi = isset($kurlar['tarih']) ? $kurlar['tarih'] : date('d.m.Y');
     ?>
-    <div style="background:#0a0e15;border-bottom:1px solid #1e2430;padding:10px 24px;display:flex;gap:16px;font-size:13px;overflow-x:auto;align-items:center;position:fixed;top:0;left:240px;right:0;z-index:101;">
+    <div style="background:#0a0e15;border-bottom:1px solid #1e2430;padding:10px 24px;display:flex;gap:16px;font-size:13px;overflow-x:auto;align-items:center;position:fixed;top:0;left:0;right:0;z-index:101;">
         <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:#141820;border-radius:8px;border:1px solid #1e2430;">
             <span style="font-size:16px;">📊</span>
             <span style="color:#94a3b8;font-size:11px;">KAYNAK</span>
@@ -674,7 +674,12 @@ function checkUpdateOnLoad() {
         .then(r => r.json())
         .then(data => {
             if (data.available) {
+                updateData = data;
                 showUpdateButton();
+                // Otomatik olarak güncelleme modalını aç
+                setTimeout(() => {
+                    showUpdateModal();
+                }, 1000);
             }
         });
 }
