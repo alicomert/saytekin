@@ -9,7 +9,6 @@
             <div>Oturum: <?php echo $user['full_name'] ?? 'Kullanici'; ?></div>
         </div>
     </div>
-<?php endif; ?>
 
 <!-- Flash Messages -->
 <?php if (isset($flashMessage) && $flashMessage): ?>
