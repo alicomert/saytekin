@@ -380,45 +380,57 @@ $kurlar = getDovizKurlari();
     <?php if (isLoggedIn()): ?>
     <!-- Döviz Kur Bandı -->
     <?php if ($kurlar): 
+        // today.xml kaynağı bilgisi
         $kurKaynagi = isset($kurlar['kaynak']) ? $kurlar['kaynak'] : 'TCMB';
         $kurTarihi = isset($kurlar['tarih']) ? $kurlar['tarih'] : date('d.m.Y');
     ?>
-    <div style="background:#0a0e15;border-bottom:1px solid #1e2430;padding:8px 24px;display:flex;gap:12px;font-size:12px;overflow-x:auto;align-items:center;position:fixed;top:0;left:240px;right:0;z-index:101;">
-        <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:#141820;border-radius:6px;border:1px solid #1e2430;">
-            <span style="font-size:14px;">📊</span>
-            <span style="color:#94a3b8;font-size:10px;">TCMB</span>
-            <span style="color:#60a5fa;font-size:11px;"><?php echo date('d.m.Y'); ?></span>
+    <div style="background:#0a0e15;border-bottom:1px solid #1e2430;padding:10px 24px;display:flex;gap:16px;font-size:13px;overflow-x:auto;align-items:center;position:fixed;top:0;left:240px;right:0;z-index:101;">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:#141820;border-radius:8px;border:1px solid #1e2430;">
+            <span style="font-size:16px;">📊</span>
+            <span style="color:#94a3b8;font-size:11px;">KAYNAK</span>
+            <span style="color:#fbbf24;font-weight:700;"><?php echo $kurKaynagi; ?></span>
+            <span style="color:#64748b;font-size:11px;">|</span>
+            <span style="color:#60a5fa;font-size:12px;"><?php echo $kurTarihi; ?></span>
         </div>
-        
+
+
         <?php
         $kurItems = [
             ['label' => 'USD', 'birim' => 'TRY', 'val' => $kurlar['USD_TRY'] ?? 0, 'renk' => '#60a5fa', 'bg' => '#1d3557'],
             ['label' => 'EUR', 'birim' => 'TRY', 'val' => $kurlar['EUR_TRY'] ?? 0, 'renk' => '#a78bfa', 'bg' => '#2e1065'],
             ['label' => 'GBP', 'birim' => 'TRY', 'val' => $kurlar['GBP_TRY'] ?? 0, 'renk' => '#34d399', 'bg' => '#064e3b'],
             ['label' => 'EUR', 'birim' => 'USD', 'val' => $kurlar['EUR_USD'] ?? 0, 'renk' => '#fbbf24', 'bg' => '#451a03'],
+            ['label' => 'GBP', 'birim' => 'USD', 'val' => $kurlar['GBP_USD'] ?? 0, 'renk' => '#f97316', 'bg' => '#7c2d12'],
         ];
         foreach ($kurItems as $k): 
             if ($k['val'] > 0):
         ?>
-        <div style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:<?php echo $k['bg']; ?>;border-radius:6px;border:1px solid <?php echo $k['renk']; ?>44;white-space:nowrap;">
-            <span style="color:<?php echo $k['renk']; ?>;font-size:10px;font-weight:700;"><?php echo $k['label']; ?>/<?php echo $k['birim']; ?></span>
-            <span style="color:<?php echo $k['renk']; ?>;font-weight:700;font-size:12px;"><?php echo number_format($k['val'], 4); ?></span>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:<?php echo $k['bg']; ?>;border-radius:8px;border:1px solid <?php echo $k['renk']; ?>44;white-space:nowrap;margin: 0 4px;">
+            <span style="background:<?php echo $k['renk']; ?>22;color:<?php echo $k['renk']; ?>;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;"><?php echo $k['label']; ?></span>
+            <span style="color:#475569;font-size:11px;">/</span>
+            <span style="background:<?php echo $k['renk']; ?>22;color:<?php echo $k['renk']; ?>;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;"><?php echo $k['birim']; ?></span>
+            <span style="color:<?php echo $k['renk']; ?>;font-weight:700;font-size:14px;margin-left:4px;"><?php echo number_format($k['val'], 4); ?></span>
         </div>
         <?php 
             endif;
         endforeach; 
         ?>
-        
-        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-            <button onclick="checkUpdateManually()" id="btn-check-update" style="display:flex;align-items:center;gap:4px;padding:4px 10px;background:#1e2430;border:1px solid #2d3748;border-radius:6px;color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa';" onmouseout="this.style.borderColor='#2d3748';this.style.color='#94a3b8';">
-                <span>🔄</span>
-                <span>Kontrol</span>
-            </button>
-            <button onclick="showUpdateModal()" id="btn-do-update" style="display:none;align-items:center;gap:4px;padding:4px 10px;background:#2a1f0a;border:1px solid #f59e0b;border-radius:6px;color:#f59e0b;font-size:11px;font-weight:600;cursor:pointer;">
-                <span>⬆️</span>
-                <span>Güncelle</span>
-                <span id="update-badge" style="background:#f59e0b;color:#000;padding:1px 5px;border-radius:8px;font-size:9px;font-weight:700;">1</span>
-            </button>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:20px;">
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#141820;border-radius:8px;border:1px solid #1e2430;">
+                <span style="font-size:14px;">🕐</span>
+                <span style="color:#64748b;font-size:12px;"><?php echo date('d.m.Y H:i'); ?></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <button onclick="checkUpdateManually()" id="btn-check-update" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e2430;border:1px solid #2d3748;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa';" onmouseout="this.style.borderColor='#2d3748';this.style.color='#94a3b8';">
+                    <span style="font-size:14px;">🔄</span>
+                    <span>Kontrol Et</span>
+                </button>
+                <button onclick="showUpdateModal()" id="btn-do-update" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:#2a1f0a;border:1px solid #f59e0b;border-radius:8px;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                    <span style="font-size:14px;">⬆️</span>
+                    <span>Güncelle</span>
+                    <span id="update-badge" style="background:#f59e0b;color:#000;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-left:4px;">1</span>
+                </button>
+            </div>
         </div>
     </div>
     <?php endif; ?>
