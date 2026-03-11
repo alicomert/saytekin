@@ -11,13 +11,34 @@ $user = getCurrentUser();
 $flashMessage = getFlashMessage();
 $pageTitle = $pageTitle ?? SITE_TITLE;
 
-// Kritik stok sayisi
+// Kritik stok sayisi ve ihtiyac listesi sayisi
 $kritikSayi = 0;
+$ihtiyacSayi = 0;
 if (isLoggedIn()) {
     $hammaddeler = getHammaddeler();
+    
+    // Aktif siparisleri al
+    $db = getDB();
+    $siparisler = $db->query("SELECT * FROM siparisler WHERE geldi = 0")->fetchAll();
+    $siparisByHammadde = [];
+    foreach ($siparisler as $s) {
+        $siparisByHammadde[$s['hammadde_id']] = $s;
+    }
+    
     foreach ($hammaddeler as $h) {
         $durum = getStokDurum($h);
         if ($durum['kritik']) $kritikSayi++;
+        
+        // İhtiyaç listesi sayısı
+        $stok = (float)$h['stok_miktari'];
+        $opt = (float)$h['hesaplanan_optimum'];
+        $sip = $siparisByHammadde[$h['id']] ?? null;
+        $sipMiktar = $sip ? (float)$sip['miktar_kg'] : 0;
+        $efektifStok = $stok + $sipMiktar;
+        
+        if ($h['sk'] !== 'K' && $h['sk'] !== 'A' && $opt > 0 && $efektifStok < $opt / 2) {
+            $ihtiyacSayi++;
+        }
     }
 }
 
@@ -451,7 +472,7 @@ $kurlar = getDovizKurlari();
                 <?php
                 $navItems = [
                     ['url' => 'index.php', 'key' => 'liste', 'label' => '📋 Tüm Liste', 'page' => 'index'],
-                    ['url' => 'ihtiyac.php', 'key' => 'ihtiyac', 'label' => '⚠️ İhtiyaç Listesi', 'page' => 'ihtiyac', 'badge' => $kritikSayi],
+                    ['url' => 'ihtiyac.php', 'key' => 'ihtiyac', 'label' => '⚠️ İhtiyaç Listesi' . ($ihtiyacSayi > 0 ? " ($ihtiyacSayi)" : ''), 'page' => 'ihtiyac', 'badge' => $ihtiyacSayi],
                     ['url' => 'siparisler.php', 'key' => 'siparisler', 'label' => '🛒 Siparişler' . ($aktifSiparisler > 0 ? " ($aktifSiparisler)" : ''), 'page' => 'siparisler'],
                     ['url' => 'fiyatlar.php', 'key' => 'fiyatlar', 'label' => '💰 Fiyat Tablosu', 'page' => 'fiyatlar'],
                     ['url' => 'karsilastirma.php', 'key' => 'karsilastirma', 'label' => '⚖️ Karşılaştırma', 'page' => 'karsilastirma'],
@@ -469,8 +490,8 @@ $kurlar = getDovizKurlari();
                 ?>
                 <a href="<?php echo $nav['url']; ?>" class="sidebar-link <?php echo $activeClass; ?>">
                     <span><?php echo $nav['label']; ?></span>
-                    <?php if ($nav['key'] === 'ihtiyac' && $kritikSayi > 0): ?>
-                    <span style="background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:auto;"><?php echo $kritikSayi; ?></span>
+                    <?php if ($nav['key'] === 'ihtiyac' && $ihtiyacSayi > 0): ?>
+                    <span style="background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:auto;"><?php echo $ihtiyacSayi; ?></span>
                     <?php endif; ?>
                 </a>
                 <?php endforeach; ?>

@@ -97,14 +97,14 @@ $toplamAktifSiparisler = count($siparisler);
     </div>
 
     <!-- Özet Kartlar -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;">
         <?php 
         $kartlar = [
             ['label' => 'Toplam İhtiyaç', 'val' => count($ihtiyacListe) . ' kalem', 'renk' => '#f59e0b', 'bg' => '#2a1f0a', 'icon' => '📦'],
             ['label' => 'Siparişi Verilmiş', 'val' => $toplamAktifSiparisler . ' kalem', 'renk' => '#34d399', 'bg' => '#0d2018', 'icon' => '✅'],
-            ['label' => 'Acil Sipariş (<%25)', 'val' => count($acil) . ' kalem', 'renk' => '#ef4444', 'bg' => '#2d1a1a', 'icon' => '🚨'],
-            ['label' => 'Sipariş Ver (%25–75)', 'val' => count($siparisVer) . ' kalem', 'renk' => '#f97316', 'bg' => '#2a1a0a', 'icon' => '📦'],
-            ['label' => 'Takipte (>%75)', 'val' => count($takipte) . ' kalem', 'renk' => '#eab308', 'bg' => '#1f1e0a', 'icon' => '👁'],
+            ['label' => 'Acil Sipariş (<%50)', 'val' => count($acil) . ' kalem', 'renk' => '#ef4444', 'bg' => '#2d1a1a', 'icon' => '🚨'],
+            ['label' => 'Sipariş Ver (50-100%)', 'val' => count($siparisVer) . ' kalem', 'renk' => '#f97316', 'bg' => '#2a1a0a', 'icon' => '📦'],
+            ['label' => 'Takipte (>100%)', 'val' => count($takipte) . ' kalem', 'renk' => '#eab308', 'bg' => '#1f1e0a', 'icon' => '👁'],
         ];
         foreach ($kartlar as $k):
         ?>
@@ -222,7 +222,7 @@ $toplamAktifSiparisler = count($siparisler);
                         <td style="padding:12px 13px;color:#64748b;font-size:12px;"><?php echo $m['termin_gun'] > 0 ? $m['termin_gun'] . ' gün' : '—'; ?></td>
                         
                         <!-- Sipariş Durumu -->
-                        <td style="padding:10px 13px;min-width:200px;">
+                        <td style="padding:10px 13px;min-width:220px;">
                             <?php if ($m['siparis_verildi'] && !$m['siparis_geldi']): ?>
                             <div style="background:#0d2018;border:1px solid #10b98155;border-radius:8px;padding:8px 10px;">
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5;">
@@ -240,7 +240,26 @@ $toplamAktifSiparisler = count($siparisler);
                                 <?php endif; ?>
                             </div>
                             <?php else: ?>
-                            <button onclick="siparisVer(<?php echo $m['id']; ?>, <?php echo max(0, round(($m['opt'] * 2) - $m['stok'])); ?>)"
+                            <div id="siparis-form-<?php echo $m['id']; ?>" style="display:none;background:#0d1a2d;border:1px solid #3b82f655;border-radius:8px;padding:10px;">
+                                <div style="font-size:11px;color:#60a5fa;font-weight:700;margin-bottom:6px;">🛒 Sipariş Bilgisi</div>
+                                <div style="margin-bottom:6px;">
+                                    <div style="font-size:10px;color:#475569;margin-bottom:3px;">Sipariş No</div>
+                                    <input type="text" id="sip-no-<?php echo $m['id']; ?>" placeholder="ör: PO-2025-001"
+                                        style="width:100%;background:#141820;border:1px solid #1e2430;border-radius:5px;padding:5px 8px;color:#f1f5f9;font-size:12px;box-sizing:border-box;">
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <div style="font-size:10px;color:#475569;margin-bottom:3px;">Miktar (kg)</div>
+                                    <input type="number" id="sip-miktar-<?php echo $m['id']; ?>" value="<?php echo max(0, round(($m['opt'] * 2) - $m['stok'])); ?>" min="0"
+                                        style="width:100%;background:#141820;border:1px solid #1e2430;border-radius:5px;padding:5px 8px;color:#34d399;font-weight:700;font-size:13px;box-sizing:border-box;">
+                                </div>
+                                <div style="display:flex;gap:6;">
+                                    <button onclick="siparisKaydet(<?php echo $m['id']; ?>)" style="flex:1;background:#10b981;border:none;border-radius:6px;padding:7px;color:#fff;cursor:pointer;font-size:12px;font-weight:700;">
+                                        ✅ Kaydet
+                                    </button>
+                                    <button onclick="siparisFormKapat(<?php echo $m['id']; ?>)" style="background:#1e2430;border:none;border-radius:6px;padding:7px 12px;cursor:pointer;color:#64748b;font-size:12px;">İptal</button>
+                                </div>
+                            </div>
+                            <button id="siparis-btn-<?php echo $m['id']; ?>" onclick="siparisFormAc(<?php echo $m['id']; ?>)"
                                 style="background:#1a2535;border:1px solid #3b82f655;border-radius:7px;padding:7px 12px;cursor:pointer;color:#60a5fa;font-size:11px;font-weight:700;width:100%;text-align:center;">
                                 🛒 Sipariş Verildi İşaretle
                             </button>
@@ -264,9 +283,19 @@ $toplamAktifSiparisler = count($siparisler);
 </div>
 
 <script>
-function siparisVer(id, miktar) {
-    const sipNo = prompt('Sipariş No:', '');
-    if (sipNo === null) return;
+function siparisFormAc(id) {
+    document.getElementById('siparis-form-' + id).style.display = 'block';
+    document.getElementById('siparis-btn-' + id).style.display = 'none';
+}
+
+function siparisFormKapat(id) {
+    document.getElementById('siparis-form-' + id).style.display = 'none';
+    document.getElementById('siparis-btn-' + id).style.display = 'block';
+}
+
+function siparisKaydet(id) {
+    const sipNo = document.getElementById('sip-no-' + id).value;
+    const miktar = document.getElementById('sip-miktar-' + id).value;
     
     fetch('ajax/siparis-ver.php', {
         method: 'POST',
@@ -274,7 +303,16 @@ function siparisVer(id, miktar) {
         body: 'hammadde_id=' + id + '&miktar=' + miktar + '&siparis_no=' + encodeURIComponent(sipNo)
     })
     .then(r => r.json())
-    .then(data => { if (data.success) location.reload(); });
+    .then(data => { 
+        if (data.success) {
+            location.reload(); 
+        } else {
+            alert('Hata: ' + (data.error || 'Bilinmeyen hata'));
+        }
+    })
+    .catch(err => {
+        alert('Bağlantı hatası: ' + err.message);
+    });
 }
 
 function siparisIptal(id) {
