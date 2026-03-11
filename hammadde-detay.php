@@ -66,7 +66,9 @@ function tarihHesapla($gun) {
     if ($gun === null) return null;
     $d = new DateTime();
     $d->modify("+{$gun} days");
-    return $d->format('d F Y');
+    $aylar = ['January' => 'Ocak', 'February' => 'Şubat', 'March' => 'Mart', 'April' => 'Nisan', 'May' => 'Mayıs', 'June' => 'Haziran', 'July' => 'Temmuz', 'August' => 'Ağustos', 'September' => 'Eylül', 'October' => 'Ekim', 'November' => 'Kasım', 'December' => 'Aralık'];
+    $tarih = $d->format('d F Y');
+    return strtr($tarih, $aylar);
 }
 
 $tukenmeTarih = tarihHesapla($kalanGun);
