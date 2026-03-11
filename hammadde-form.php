@@ -161,7 +161,7 @@ $YIL_RENKLER = [
     2026 => ['bg' => '#1a2535', 'border' => '#f59e0b', 'text' => '#fbbf24', 'dot' => '#f59e0b'],
 ];
 
-$Aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+$Aylar = [1 => 'Ocak', 2 => 'Şubat', 3 => 'Mart', 4 => 'Nisan', 5 => 'Mayıs', 6 => 'Haziran', 7 => 'Temmuz', 8 => 'Ağustos', 9 => 'Eylül', 10 => 'Ekim', 11 => 'Kasım', 12 => 'Aralık'];
 
 // YILLAR - SADECE veritabanindaki yilları göster (dinamik)
 $yillar = getTuketimYillari();
