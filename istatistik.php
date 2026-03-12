@@ -390,6 +390,16 @@ $maxSonYil = !empty($hammaddeStats) ? max(array_column($hammaddeStats, $sonYilKe
                                 <div style="width:<?php echo $barYuzde; ?>%;height:100%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:3px;"></div>
                             </div>
                         </td>
+                        <td style="padding:10px 12px;text-align:center;">
+                            <div style="display:flex;gap:6px;justify-content:center;">
+                                <a href="hammadde-detay.php?id=<?php echo $m['id']; ?>" 
+                                    style="padding:4px 8px;background:#1e2430;border:1px solid #3b82f655;border-radius:5px;color:#60a5fa;font-size:11px;font-weight:600;text-decoration:none;"
+                                    title="Detay">👁</a>
+                                <a href="hammadde-form.php?id=<?php echo $m['id']; ?>" 
+                                    style="padding:4px 8px;background:#1e2430;border:1px solid #fbbf2466;border-radius:5px;color:#fbbf24;font-size:11px;font-weight:600;text-decoration:none;"
+                                    title="Düzenle">✏️</a>
+                            </div>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
