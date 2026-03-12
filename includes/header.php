@@ -17,27 +17,13 @@ $ihtiyacSayi = 0;
 if (isLoggedIn()) {
     $hammaddeler = getHammaddeler();
     
-    // Aktif siparisleri al
-    $db = getDB();
-    $siparisler = $db->query("SELECT * FROM siparisler WHERE geldi = 0")->fetchAll();
-    $siparisByHammadde = [];
-    foreach ($siparisler as $s) {
-        $siparisByHammadde[$s['hammadde_id']] = $s;
-    }
-    
     foreach ($hammaddeler as $h) {
         $durum = getStokDurum($h);
         if ($durum['kritik']) $kritikSayi++;
         
-        // İhtiyaç listesi sayısı - ihtiyac.php ile aynı mantık
-        $stok = (float)$h['stok_miktari'];
-        $opt = (float)$h['hesaplanan_optimum'];
-        $sip = $siparisByHammadde[$h['id']] ?? null;
-        $sipMiktar = $sip ? (float)$sip['miktar_kg'] : 0;
-        $efektifStok = $stok + $sipMiktar;
-        
-        // ihtiyac.php ile aynı kriterler: SK != K/A, opt > 0, efektif stok < opt
-        if ($h['sk'] !== 'K' && $h['sk'] !== 'A' && $opt > 0 && $efektifStok < $opt) {
+        // İhtiyaç listesi sayısı - getStokDurum() label'ine göre
+        // Sadece TAKIPTE, SIPARIS VER, ACIL SIPARIS olanlar
+        if ($h['sk'] !== 'K' && $h['sk'] !== 'A' && !empty($durum['label'])) {
             $ihtiyacSayi++;
         }
     }
