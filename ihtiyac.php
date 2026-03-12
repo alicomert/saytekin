@@ -117,15 +117,17 @@ function tabloyuGuncelle() {
 
 // Tablo satırı oluştur
 function satirOlustur(m) {
-    const oncelik = m.oran === null 
-        ? { renk: '#475569', bg: '#141820', etiket: 'VERİ YOK', icon: '—' }
-        : m.oran < 0.5 
-            ? { renk: '#ef4444', bg: '#2d1a1a', etiket: 'ACİL SİPARİŞ', icon: '🚨' }
-            : m.oran < 1 
-                ? { renk: '#f97316', bg: '#2a1a0a', etiket: 'SİPARİŞ VER', icon: '📦' }
-                : m.oran < 2 
-                    ? { renk: '#eab308', bg: '#1f1e0a', etiket: 'TAKİPTE', icon: '👁' }
-                    : { renk: '#34d399', bg: '#0d2018', etiket: 'RAHAT', icon: '✅' };
+    // getStokDurum() label'ine göre öncelik belirle - index.php ile AYNI mantık
+    let oncelik;
+    if (m.stok_durum_label === 'ACIL SIPARIS') {
+        oncelik = { renk: '#ef4444', bg: '#2d1a1a', etiket: 'ACİL SİPARİŞ', icon: '🚨' };
+    } else if (m.stok_durum_label === 'SIPARIS VER') {
+        oncelik = { renk: '#f97316', bg: '#2a1a0a', etiket: 'SİPARİŞ VER', icon: '📦' };
+    } else if (m.stok_durum_label === 'TAKIPTE') {
+        oncelik = { renk: '#eab308', bg: '#1f1e0a', etiket: 'TAKİPTE', icon: '👁' };
+    } else {
+        oncelik = { renk: '#475569', bg: '#141820', etiket: 'VERİ YOK', icon: '—' };
+    }
     
     const yuzde = m.oran !== null ? Math.min(100, Math.round(m.oran * 50)) : 0;
     
@@ -156,8 +158,8 @@ function satirOlustur(m) {
                 <span style="background:#1e2430;padding:2px 8px;border-radius:4px;font-size:11px;color:#94a3b8;">${m.tur_adi}</span>
             </td>
             <td style="padding:12px 13px;font-size:13px;">
-                <span style="color:${m.stok_durum_label ? (m.stok_durum_label.includes('ACİL') ? '#ef4444' : '#f97316') : '#f87171'};font-weight:700;">${formatNumber(m.stok)}</span>
-                ${m.stok_durum_label ? `<span style="margin-left:4px;font-size:10px;padding:1px 4px;border-radius:3px;font-weight:700;background:${m.stok_durum_label.includes('ACİL') ? '#ef4444' : '#f97316'}22;color:${m.stok_durum_label.includes('ACİL') ? '#ef4444' : '#f97316'};">${m.stok_durum_label}</span>` : ''}
+                <span style="color:${m.stok_durum_label == 'ACIL SIPARIS' ? '#ef4444' : (m.stok_durum_label == 'SIPARIS VER' ? '#f97316' : '#eab308')};font-weight:700;font-family:monospace;">${formatNumber(m.stok)}</span>
+                ${m.stok_durum_label ? `<span style="margin-left:4px;font-size:10px;padding:2px 6px;border-radius:3px;font-weight:700;background:${m.stok_durum_label == 'ACIL SIPARIS' ? '#ef4444' : (m.stok_durum_label == 'SIPARIS VER' ? '#f97316' : '#eab308')}22;color:${m.stok_durum_label == 'ACIL SIPARIS' ? '#ef4444' : (m.stok_durum_label == 'SIPARIS VER' ? '#f97316' : '#eab308')};">${m.stok_durum_label}</span>` : ''}
             </td>
             <td style="padding:12px 13px;color:#64748b;font-size:12px;">${formatNumber(m.opt)}</td>
             <td style="padding:12px 13px;font-weight:700;color:${oncelik.renk};font-size:13px;">${formatNumber(m.eksik)}</td>

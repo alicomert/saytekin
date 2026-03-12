@@ -45,17 +45,20 @@ foreach ($hammaddeler as $h) {
     $sipMiktar = $sip ? (float)$sip['miktar_kg'] : 0;
     $efektifStok = $stok + $sipMiktar;
     
-    // Sadece K ve A olmayan, optimumu olan ve efektif stok < optimum/2 olanları göster
-    if ($h['sk'] !== 'K' && $h['sk'] !== 'A' && $opt > 0 && $efektifStok < $opt / 2) {
+    // Stok durum bilgisi - index.php ile AYNI mantık
+    $durum = getStokDurum($h);
+    $stokDurumLabel = $durum['label'] ?? '';
+    $oran = $durum['oran'] ?? null;
+    $kalanGun = $durum['kalan_gun'] ?? null;
+    
+    // Sadece K ve A olmayan, optimumu olan ve stok durumu etiketi olanları göster
+    // index.php'de "SIPARIS VER", "ACIL SIPARIS", "TAKIPTE" yazanlar
+    if ($h['sk'] !== 'K' && $h['sk'] !== 'A' && $opt > 0 && !empty($stokDurumLabel)) {
         $optEfektif = $opt / 2;
-        $eksik = $optEfektif - $efektifStok;
+        $eksik = max(0, $optEfektif - $efektifStok);
         
         // Termin süresi
         $terminGun = ($h['akreditif_gun'] ?? 0) + ($h['satici_tedarik_gun'] ?? 0) + ($h['yol_gun'] ?? 0) + ($h['depo_kabul_gun'] ?? 0);
-        
-        // Stok durum bilgisi (index.php ile aynı mantık)
-        $durum = getStokDurum($h);
-        $stokDurumLabel = $durum['label'] ?? '';
         
         // Tüketim hesapla
         $tuk = $tuketimTumu[$h['id']];
@@ -67,10 +70,6 @@ foreach ($hammaddeler as $h) {
         }
         $tumTuk = array_merge($t2025, $t2026);
         $aylikOrt = count($tumTuk) > 0 ? array_sum($tumTuk) / 12 : 0;
-        $gunlukTuk = $aylikOrt / 30;
-        $kalanGun = $gunlukTuk > 0 ? round($efektifStok / $gunlukTuk) : null;
-        
-        $oran = $kalanGun !== null && $terminGun > 0 ? $kalanGun / $terminGun : ($kalanGun !== null ? 99 : null);
         
         $item = [
             'id' => (int)$h['id'],
@@ -96,17 +95,18 @@ foreach ($hammaddeler as $h) {
         
         $ihtiyacListe[] = $item;
         
-        // Özet istatistikleri güncelle
+        // Özet istatistikleri güncelle - getStokDurum() label'ine göre
         $ozet['toplam']++;
         if ($item['siparis_verildi'] && !$item['siparis_geldi']) {
             $ozet['siparisVerilmis']++;
         }
         
-        if ($oran !== null) {
-            if ($oran < 0.5) $ozet['acil']++;
-            elseif ($oran < 1) $ozet['siparisVer']++;
-            else $ozet['takipte']++;
-        } else {
+        // Label'e göre kategorize et
+        if ($stokDurumLabel == 'ACIL SIPARIS') {
+            $ozet['acil']++;
+        } elseif ($stokDurumLabel == 'SIPARIS VER') {
+            $ozet['siparisVer']++;
+        } elseif ($stokDurumLabel == 'TAKIPTE') {
             $ozet['takipte']++;
         }
     }
