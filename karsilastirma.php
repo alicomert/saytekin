@@ -81,11 +81,19 @@ $seciliHammaddeler = array_filter($hammaddeler, fn($h) => in_array($h['id'], $se
                     <tr style="background:#0f1117;">
                         <th style="text-align:left;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:12px 16px;border-bottom:1px solid #1e2430;">KRİTER</th>
                         <?php foreach ($seciliHammaddeler as $h): ?>
-                        <th style="text-align:left;color:#60a5fa;font-weight:700;font-size:13px;padding:12px 16px;border-bottom:1px solid #1e2430;min-width:160px;">
+                         <th style="text-align:left;color:#60a5fa;font-weight:700;font-size:13px;padding:12px 16px;border-bottom:1px solid #1e2430;min-width:180px;">
                             <div style="color:#f1f5f9;margin-bottom:4px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?php echo htmlspecialchars($h['hammadde_ismi']); ?>">
                                 <?php echo htmlspecialchars($h['hammadde_ismi']); ?>
                             </div>
                             <div style="font-size:11px;color:#64748b;font-weight:400;"><?php echo $h['stok_kodu']; ?></div>
+                            <div style="margin-top:6px;display:flex;gap:4px;">
+                                <a href="hammadde-form.php?id=<?php echo $h['id']; ?>" 
+                                    style="padding:3px 8px;background:#141820;border:1px solid #fbbf2466;border-radius:4px;color:#fbbf24;font-size:10px;font-weight:600;text-decoration:none;"
+                                    title="Düzenle">✏️ Düzenle</a>
+                                <a href="hammadde-detay.php?id=<?php echo $h['id']; ?>" 
+                                    style="padding:3px 8px;background:#141820;border:1px solid #3b82f655;border-radius:4px;color:#60a5fa;font-size:10px;font-weight:600;text-decoration:none;"
+                                    title="Detay">👁 Detay</a>
+                            </div>
                         </th>
                         <?php endforeach; ?>
                     </tr>

@@ -96,6 +96,7 @@ $YIL_RENKLER = [
                             <th style="padding:11px 14px;text-align:right;color:#475569;font-weight:700;font-size:10px;letter-spacing:0.06em;white-space:nowrap;">ORT. AYLIK</th>
                             <th style="padding:11px 14px;text-align:right;color:#475569;font-weight:700;font-size:10px;letter-spacing:0.06em;white-space:nowrap;">OPTİMUM</th>
                             <th style="padding:11px 14px;text-align:center;color:#475569;font-weight:700;font-size:10px;letter-spacing:0.06em;white-space:nowrap;">DURUM</th>
+                            <th style="padding:11px 14px;text-align:center;color:#475569;font-weight:700;font-size:10px;letter-spacing:0.06em;white-space:nowrap;">İŞLEM</th>
                         </tr>
                     </thead>
                     <tbody>

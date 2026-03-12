@@ -81,7 +81,7 @@ $PAKETLEME_TIPLERI = [
                                 onchange="toggleTumunu(this)" style="cursor:pointer;width:14px;height:14px;">
                         </th>
                         <?php 
-                        $sutunlar = ["Hammadde","Stok Kodu","Tedarikçi","Menşei","Paketleme","Teslim Şekli","Para Birimi","Birim","Tür","Birim Fiyat","Maliyet","Varış Maliyeti","Varış (EUR)","Toplam Stok Bedeli","Geçmiş Sayısı"];
+                        $sutunlar = ["Hammadde","Düzenle","Stok Kodu","Tedarikçi","Menşei","Paketleme","Teslim Şekli","Para Birimi","Birim","Tür","Birim Fiyat","Maliyet","Varış Maliyeti","Varış (EUR)","Toplam Stok Bedeli","Geçmiş Sayısı"];
                         foreach ($sutunlar as $h): ?>
                         <th style="padding:10px 13px;text-align:left;color:#475569;font-weight:700;white-space:nowrap;letter-spacing:0.05em;font-size:10px;"><?php echo $h; ?></th>
                         <?php endforeach; ?>
