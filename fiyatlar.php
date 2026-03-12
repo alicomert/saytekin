@@ -126,6 +126,15 @@ $PAKETLEME_TIPLERI = [
                         <td style="padding:10px 13px;font-weight:600;color:#f1f5f9;max-width:200px;cursor:pointer;" onclick="detayGit(<?php echo $h['id']; ?>)">
                             <?php echo htmlspecialchars($h['hammadde_ismi']); ?>
                         </td>
+                        <!-- Düzenle Butonu -->
+                        <td style="padding:10px 13px;">
+                            <a href="hammadde-form.php?id=<?php echo $h['id']; ?>" 
+                                style="padding:4px 10px;background:#141820;border:1px solid #fbbf2466;border-radius:6px;color:#fbbf24;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"
+                                onclick="event.stopPropagation();"
+                                title="Hammaddeyi Düzenle">
+                                ✏️
+                            </a>
+                        </td>
                         <td style="padding:10px 13px;color:#64748b;font-family:monospace;font-size:11px;"><?php echo $h['stok_kodu']; ?></td>
                         <td style="padding:10px 13px;color:#94a3b8;"><?php echo $h['tedarikci'] ?: '-'; ?></td>
                         <td style="padding:10px 13px;color:#94a3b8;"><?php echo $h['ulke_adi'] ?: '-'; ?></td>

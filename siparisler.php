@@ -147,8 +147,8 @@ $toplamAktif = $db->query("SELECT COUNT(*) as c FROM siparisler WHERE geldi = 0"
                         
                         <!-- İşlem -->
                         <td style="padding:12px 13px;">
-                            <?php if ($sipTab === 'aktif'): ?>
-                            <div style="display:flex;gap:6px;">
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <?php if ($sipTab === 'aktif'): ?>
                                 <button onclick="tamamlaSiparis(<?php echo $s['id']; ?>)" 
                                     style="padding:6px 12px;background:#1d3557;border:1px solid #3b82f655;border-radius:6px;color:#60a5fa;font-size:11px;font-weight:700;cursor:pointer;">
                                     ✅ Tamam
@@ -157,13 +157,24 @@ $toplamAktif = $db->query("SELECT COUNT(*) as c FROM siparisler WHERE geldi = 0"
                                     style="padding:6px 12px;background:#2d1a1a;border:1px solid #ef444455;border-radius:6px;color:#ef4444;font-size:11px;font-weight:700;cursor:pointer;">
                                     ✕ İptal
                                 </button>
+                                <?php else: ?>
+                                <button onclick="temizleSiparis(<?php echo $s['id']; ?>)" 
+                                    style="padding:6px 12px;background:#1e2430;border:1px solid #1e2430;border-radius:6px;color:#64748b;font-size:11px;cursor:pointer;">
+                                    ✕ Temizle
+                                </button>
+                                <?php endif; ?>
+                                <!-- Düzenle butonu - her zaman göster -->
+                                <a href="hammadde-form.php?id=<?php echo $s['hammadde_id']; ?>" 
+                                    style="padding:6px 12px;background:#141820;border:1px solid #fbbf2466;border-radius:6px;color:#fbbf24;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"
+                                    title="Hammaddeyi Düzenle">
+                                    ✏️ Düzenle
+                                </a>
+                                <a href="hammadde-detay.php?id=<?php echo $s['hammadde_id']; ?>" 
+                                    style="padding:6px 12px;background:#141820;border:1px solid #3b82f655;border-radius:6px;color:#60a5fa;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"
+                                    title="Hammadde Detay">
+                                    👁 Detay
+                                </a>
                             </div>
-                            <?php else: ?>
-                            <button onclick="temizleSiparis(<?php echo $s['id']; ?>)" 
-                                style="padding:6px 12px;background:#1e2430;border:1px solid #1e2430;border-radius:6px;color:#64748b;font-size:11px;cursor:pointer;">
-                                ✕ Temizle
-                            </button>
-                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
