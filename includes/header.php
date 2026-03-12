@@ -29,14 +29,15 @@ if (isLoggedIn()) {
         $durum = getStokDurum($h);
         if ($durum['kritik']) $kritikSayi++;
         
-        // İhtiyaç listesi sayısı
+        // İhtiyaç listesi sayısı - ihtiyac.php ile aynı mantık
         $stok = (float)$h['stok_miktari'];
         $opt = (float)$h['hesaplanan_optimum'];
         $sip = $siparisByHammadde[$h['id']] ?? null;
         $sipMiktar = $sip ? (float)$sip['miktar_kg'] : 0;
         $efektifStok = $stok + $sipMiktar;
         
-        if ($h['sk'] !== 'K' && $h['sk'] !== 'A' && $opt > 0 && $efektifStok < $opt / 2) {
+        // ihtiyac.php ile aynı kriterler: SK != K/A, opt > 0, efektif stok < opt
+        if ($h['sk'] !== 'K' && $h['sk'] !== 'A' && $opt > 0 && $efektifStok < $opt) {
             $ihtiyacSayi++;
         }
     }
