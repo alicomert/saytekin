@@ -47,15 +47,17 @@ $toplamBedel = $varisMaliyet * $stokBirimde;
 $s12Veriler = [];
 foreach ($aylar as $idx => $ay) {
     $deger = $tuketimVerileri[2025][$idx + 1] ?? 0;
-    if ($deger > 0) $s12Veriler[] = ['etiket' => substr($ay, 0, 3) . ' \'25', 'deger' => $deger];
+    // 0 değerli aylar da dahil ediliyor (sadece null/boş olmayanlar)
+    $s12Veriler[] = ['etiket' => substr($ay, 0, 3) . ' \'25', 'deger' => $deger];
 }
 foreach (['Ocak', 'Şubat'] as $ay) {
     $deger = $tuketimVerileri[2026][array_search($ay, $aylar) + 1] ?? 0;
-    if ($deger > 0) $s12Veriler[] = ['etiket' => substr($ay, 0, 3) . ' \'26', 'deger' => $deger];
+    $s12Veriler[] = ['etiket' => substr($ay, 0, 3) . ' \'26', 'deger' => $deger];
 }
 $s12Veriler = array_slice($s12Veriler, -12);
 $topS12 = array_sum(array_column($s12Veriler, 'deger'));
-$gunlukTuketim = count($s12Veriler) > 0 ? $topS12 / (count($s12Veriler) * 30) : 0;
+// Her zaman 12 ay baz alınarak hesaplama yapılıyor
+$gunlukTuketim = count($s12Veriler) > 0 ? $topS12 / (12 * 30) : 0;
 
 $optKgGirilen = (float)$hammadde['hesaplanan_optimum'];
 $optKg = $optKgGirilen / 2;
@@ -66,9 +68,11 @@ function tarihHesapla($gun) {
     if ($gun === null) return null;
     $d = new DateTime();
     $d->modify("+{$gun} days");
-    $aylar = ['January' => 'Ocak', 'February' => 'Şubat', 'March' => 'Mart', 'April' => 'Nisan', 'May' => 'Mayıs', 'June' => 'Haziran', 'July' => 'Temmuz', 'August' => 'Ağustos', 'September' => 'Eylül', 'October' => 'Ekim', 'November' => 'Kasım', 'December' => 'Aralık'];
-    $tarih = $d->format('d F Y');
-    return strtr($tarih, $aylar);
+    // Türkçe ay isimleri
+    $aylarIng = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    $aylarTr = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    $ay = (int)$d->format('n') - 1; // 0-11 arası
+    return $d->format('d') . ' ' . $aylarTr[$ay] . ' ' . $d->format('Y');
 }
 
 $tukenmeTarih = tarihHesapla($kalanGun);
@@ -335,6 +339,9 @@ $PAKETLEME_TIPLERI = [
     $optYarisi = null;
     $maksYarisi = null;
     
+    // Türkçe ay isimleri
+    $aylarTr = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    
     if ($gunlukTuketim > 0 && $terminToplam > 0 && $stokKg > 0) {
         $minYarisiKg = round($minMiktar / 2);
         $optYarisiKg = round($optMiktar / 2);
@@ -344,8 +351,9 @@ $PAKETLEME_TIPLERI = [
             $minGun = round(($stokKg - $minYarisiKg) / $gunlukTuketim);
             $minTarih = new DateTime();
             $minTarih->modify("+{$minGun} days");
+            $minAy = (int)$minTarih->format('n') - 1;
             $minYarisi = [
-                'tarih' => $minTarih->format('d F Y'),
+                'tarih' => $minTarih->format('d') . ' ' . $aylarTr[$minAy] . ' ' . $minTarih->format('Y'),
                 'gun' => $minGun,
                 'kalanStok' => $minYarisiKg,
                 'kalanGun' => round($minYarisiKg / $gunlukTuketim)
@@ -356,8 +364,9 @@ $PAKETLEME_TIPLERI = [
             $optGun = round(($stokKg - $optYarisiKg) / $gunlukTuketim);
             $optTarih = new DateTime();
             $optTarih->modify("+{$optGun} days");
+            $optAy = (int)$optTarih->format('n') - 1;
             $optYarisi = [
-                'tarih' => $optTarih->format('d F Y'),
+                'tarih' => $optTarih->format('d') . ' ' . $aylarTr[$optAy] . ' ' . $optTarih->format('Y'),
                 'gun' => $optGun,
                 'kalanStok' => $optYarisiKg,
                 'kalanGun' => round($optYarisiKg / $gunlukTuketim)
@@ -368,8 +377,9 @@ $PAKETLEME_TIPLERI = [
             $maksGun = round(($stokKg - $maksYarisiKg) / $gunlukTuketim);
             $maksTarih = new DateTime();
             $maksTarih->modify("+{$maksGun} days");
+            $maksAy = (int)$maksTarih->format('n') - 1;
             $maksYarisi = [
-                'tarih' => $maksTarih->format('d F Y'),
+                'tarih' => $maksTarih->format('d') . ' ' . $aylarTr[$maksAy] . ' ' . $maksTarih->format('Y'),
                 'gun' => $maksGun,
                 'kalanStok' => $maksYarisiKg,
                 'kalanGun' => round($maksYarisiKg / $gunlukTuketim)
@@ -534,15 +544,15 @@ $PAKETLEME_TIPLERI = [
         }
         $maxY = count($yilVeriler) > 0 ? max(array_column($yilVeriler, 'deger')) : 1;
         $topY = array_sum(array_column($yilVeriler, 'deger'));
-        $aktifVals = array_filter(array_column($yilVeriler, 'deger'), fn($v) => $v > 0);
-        $ortY = count($aktifVals) > 0 ? $topY / count($aktifVals) : 0;
+        // Her zaman 12 ay baz alınarak ortalama hesapla (0 değerli aylar da dahil)
+        $ortY = $topY / 12;
         ?>
         
         <!-- Özet -->
         <div style="display:flex;gap:20;margin-bottom:16px;padding:10px 14px;background:#0f1117;border-radius:8;">
             <div><span style="font-size:11px;color:#475569;">Toplam: </span><span style="font-size:13px;font-weight:700;color:<?php echo $rk['text']; ?>;"><?php echo $topY > 0 ? number_format($topY, 0, ',', '.').' kg' : '—'; ?></span></div>
             <div><span style="font-size:11px;color:#475569;">Aylık ort: </span><span style="font-size:13px;font-weight:700;color:<?php echo $rk['text']; ?>;"><?php echo $ortY > 0 ? number_format($ortY, 0, ',', '.').' kg' : '—'; ?></span></div>
-            <div><span style="font-size:11px;color:#475569;">Veri olan ay: </span><span style="font-size:13px;font-weight:700;color:<?php echo $rk['text']; ?>;"><?php echo count($aktifVals); ?></span></div>
+            <div><span style="font-size:11px;color:#475569;">Hesaplanan ay: </span><span style="font-size:13px;font-weight:700;color:<?php echo $rk['text']; ?>;">12</span></div>
         </div>
         
         <!-- Bar Grafik -->
@@ -578,9 +588,11 @@ $PAKETLEME_TIPLERI = [
                         $vals = [];
                         for ($i = 1; $i <= 12; $i++) {
                             $v = $tuketimVerileri[$y][$i] ?? 0;
-                            if ($v > 0) $vals[] = $v;
+                            // 0 değerli aylar da dahil - boş olmayan tüm aylar
+                            $vals[] = $v;
                         }
-                        $ort = count($vals) > 0 ? round(array_sum($vals) / count($vals)) : 0;
+                        // Her zaman 12 ay baz alınarak ortalama hesapla
+                        $ort = count($vals) > 0 ? round(array_sum($vals) / 12) : 0;
                         $isActive = $y == $aktifYil;
                     ?>
                     <tr style="border-bottom:1px solid #1e2430;background:<?php echo $isActive ? $rk2['bg'].'44' : 'transparent'; ?>;">

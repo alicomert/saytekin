@@ -577,14 +577,14 @@ input:focus, select:focus { outline: none; border-color: #3b82f6 !important; box
                     <?php
                     $yilVeriler = [];
                     foreach ($Aylar as $ayNo => $ayAd) {
-                        if (!empty($tuketimVerileri[$yil][$ayNo])) {
-                            $yilVeriler[] = $tuketimVerileri[$yil][$ayNo];
-                        }
+                        // 0 değerli aylar da dahil - tüm 12 ay
+                        $yilVeriler[] = $tuketimVerileri[$yil][$ayNo] ?? 0;
                     }
-                    $girilenAy = count($yilVeriler);
+                    $girilenAy = count(array_filter($yilVeriler, fn($v) => $v > 0));
                     $toplam = array_sum($yilVeriler);
-                    $ortalama = $girilenAy > 0 ? $toplam / $girilenAy : 0;
-                    $maks = $girilenAy > 0 ? max($yilVeriler) : 0;
+                    // Her zaman 12 ay baz alınarak ortalama hesapla
+                    $ortalama = $toplam / 12;
+                    $maks = count($yilVeriler) > 0 ? max($yilVeriler) : 0;
                     ?>
                     <div>
                         <span style="font-size: 11px; color: #4b5563;">Girilen Ay</span>

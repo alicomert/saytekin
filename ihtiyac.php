@@ -38,11 +38,13 @@ foreach ($hammaddeler as $h) {
         $t2025 = [];
         $t2026 = [];
         for ($i = 1; $i <= 12; $i++) {
-            if (($tuk[2025][$i] ?? 0) > 0) $t2025[] = $tuk[2025][$i];
-            if (($tuk[2026][$i] ?? 0) > 0) $t2026[] = $tuk[2026][$i];
+            // 0 değerli aylar da dahil ediliyor
+            $t2025[] = $tuk[2025][$i] ?? 0;
+            $t2026[] = $tuk[2026][$i] ?? 0;
         }
         $tumTuk = array_merge($t2025, $t2026);
-        $aylikOrt = count($tumTuk) > 0 ? array_sum($tumTuk) / count($tumTuk) : 0;
+        // Her zaman 12 ay baz alınarak ortalama hesapla
+        $aylikOrt = count($tumTuk) > 0 ? array_sum($tumTuk) / 12 : 0;
         $gunlukTuk = $aylikOrt / 30;
         $kalanGun = $gunlukTuk > 0 ? round($efektifStok / $gunlukTuk) : null;
         
@@ -297,12 +299,29 @@ function siparisKaydet(id) {
     const sipNo = document.getElementById('sip-no-' + id).value;
     const miktar = document.getElementById('sip-miktar-' + id).value;
     
+    // Validation
+    if (!miktar || parseFloat(miktar) <= 0) {
+        alert('Lütfen geçerli bir miktar girin.');
+        return;
+    }
+    
     fetch('ajax/siparis-ver.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'hammadde_id=' + id + '&miktar=' + miktar + '&siparis_no=' + encodeURIComponent(sipNo)
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) {
+            throw new Error('HTTP Hata: ' + r.status);
+        }
+        const contentType = r.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            return r.text().then(text => {
+                throw new Error('Sunucu JSON yerine HTML döndürdü. Hata mesajı: ' + text.substring(0, 200));
+            });
+        }
+        return r.json();
+    })
     .then(data => { 
         if (data.success) {
             location.reload(); 
@@ -311,6 +330,7 @@ function siparisKaydet(id) {
         }
     })
     .catch(err => {
+        console.error('Sipariş kaydetme hatası:', err);
         alert('Bağlantı hatası: ' + err.message);
     });
 }
