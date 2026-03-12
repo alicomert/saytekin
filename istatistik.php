@@ -350,6 +350,7 @@ $maxSonYil = !empty($hammaddeStats) ? max(array_column($hammaddeStats, $sonYilKe
                         <th style="padding:10px 12px;text-align:right;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Son 3 Ay</th>
                         <th style="padding:10px 12px;text-align:left;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Trend</th>
                         <th style="padding:10px 12px;text-align:center;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">Gösterge</th>
+                    <th style="padding:10px 12px;text-align:center;font-size:10px;color:#475569;letter-spacing:0.07em;font-weight:700;white-space:nowrap;">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
