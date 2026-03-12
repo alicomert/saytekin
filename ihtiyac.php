@@ -155,7 +155,10 @@ function satirOlustur(m) {
             <td style="padding:12px 13px;">
                 <span style="background:#1e2430;padding:2px 8px;border-radius:4px;font-size:11px;color:#94a3b8;">${m.tur_adi}</span>
             </td>
-            <td style="padding:12px 13px;font-weight:700;color:#f87171;font-size:13px;">${formatNumber(m.stok)}</td>
+            <td style="padding:12px 13px;font-size:13px;">
+                <span style="color:${m.stok_durum_label ? (m.stok_durum_label.includes('ACİL') ? '#ef4444' : '#f97316') : '#f87171'};font-weight:700;">${formatNumber(m.stok)}</span>
+                ${m.stok_durum_label ? `<span style="margin-left:4px;font-size:10px;padding:1px 4px;border-radius:3px;font-weight:700;background:${m.stok_durum_label.includes('ACİL') ? '#ef4444' : '#f97316'}22;color:${m.stok_durum_label.includes('ACİL') ? '#ef4444' : '#f97316'};">${m.stok_durum_label}</span>` : ''}
+            </td>
             <td style="padding:12px 13px;color:#64748b;font-size:12px;">${formatNumber(m.opt)}</td>
             <td style="padding:12px 13px;font-weight:700;color:${oncelik.renk};font-size:13px;">${formatNumber(m.eksik)}</td>
             <td style="padding:12px 13px;min-width:120px;">

@@ -53,6 +53,10 @@ foreach ($hammaddeler as $h) {
         // Termin süresi
         $terminGun = ($h['akreditif_gun'] ?? 0) + ($h['satici_tedarik_gun'] ?? 0) + ($h['yol_gun'] ?? 0) + ($h['depo_kabul_gun'] ?? 0);
         
+        // Stok durum bilgisi (index.php ile aynı mantık)
+        $durum = getStokDurum($h);
+        $stokDurumLabel = $durum['label'] ?? '';
+        
         // Tüketim hesapla
         $tuk = $tuketimTumu[$h['id']];
         $t2025 = [];
@@ -75,6 +79,7 @@ foreach ($hammaddeler as $h) {
             'tur_adi' => $h['tur_adi'] ?? '-',
             'hammadde_ismi' => $h['hammadde_ismi'],
             'tedarikci' => $h['tedarikci'],
+            'stok_durum_label' => $stokDurumLabel,
             'stok' => $stok,
             'opt' => $opt,
             'siparis_verildi' => $sip ? true : false,
