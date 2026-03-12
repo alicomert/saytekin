@@ -718,5 +718,49 @@ function hideUpdateButton() {
     if (btnCheck) btnCheck.style.display = 'flex';
     if (btnUpdate) btnUpdate.style.display = 'none';
 }
+
+// Header sayaçlarını güncelle (ihtiyac.php için)
+function updateHeaderBadges() {
+    fetch('ajax/header-badges.php')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // İhtiyaç listesi sayacını güncelle
+                const ihtiyacLinks = document.querySelectorAll('a[href="ihtiyac.php"]');
+                ihtiyacLinks.forEach(link => {
+                    // Mevcut badge'i kaldır
+                    const oldBadge = link.querySelector('span:last-child');
+                    if (oldBadge && oldBadge.style.background === 'rgb(239, 68, 68)') {
+                        oldBadge.remove();
+                    }
+                    // Yeni badge ekle
+                    if (data.ihtiyacSayi > 0) {
+                        const badge = document.createElement('span');
+                        badge.style.cssText = 'background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:auto;';
+                        badge.textContent = data.ihtiyacSayi;
+                        link.appendChild(badge);
+                    }
+                    // Label'ı güncelle
+                    const labelSpan = link.querySelector('span:first-child');
+                    if (labelSpan) {
+                        labelSpan.textContent = '⚠️ İhtiyaç Listesi' + (data.ihtiyacSayi > 0 ? ` (${data.ihtiyacSayi})` : '');
+                    }
+                });
+                
+                // Siparişler sayacını güncelle
+                const siparisLinks = document.querySelectorAll('a[href="siparisler.php"]');
+                siparisLinks.forEach(link => {
+                    const labelSpan = link.querySelector('span:first-child');
+                    if (labelSpan) {
+                        labelSpan.textContent = '🛒 Siparişler' + (data.aktifSiparisler > 0 ? ` (${data.aktifSiparisler})` : '');
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('Header badge update error:', err));
+}
+
+// Global olarak kullanılabilir hale getir
+window.updateHeaderBadges = updateHeaderBadges;
 </script>
 <?php endif; ?>

@@ -10,9 +10,10 @@ if (!isLoggedIn()) {
 }
 
 $id = $_POST['id'] ?? null;
+$hammaddeId = $_POST['hammadde_id'] ?? null;
 $islem = $_POST['islem'] ?? null;
 
-if (!$id || !$islem) {
+if ((!$id && !$hammaddeId) || !$islem) {
     echo json_encode(['success' => false, 'message' => 'Eksik parametre.']);
     exit;
 }
@@ -21,13 +22,35 @@ $db = getDB();
 
 try {
     if ($islem === 'tamamla') {
-        $db->prepare("UPDATE siparisler SET geldi = 1, teslim_tarihi = CURDATE() WHERE id = ?")
-           ->execute([$id]);
+        // ID veya hammadde_id ile tamamla
+        if ($id) {
+            $db->prepare("UPDATE siparisler SET geldi = 1, teslim_tarihi = CURDATE() WHERE id = ?")
+               ->execute([$id]);
+        } else {
+            $db->prepare("UPDATE siparisler SET geldi = 1, teslim_tarihi = CURDATE() WHERE hammadde_id = ? AND geldi = 0")
+               ->execute([$hammaddeId]);
+        }
         echo json_encode(['success' => true, 'message' => 'Siparis tamamlandi.']);
     } elseif ($islem === 'iptal') {
-        $db->prepare("DELETE FROM siparisler WHERE id = ?")
-           ->execute([$id]);
+        // ID veya hammadde_id ile iptal
+        if ($id) {
+            $db->prepare("DELETE FROM siparisler WHERE id = ?")
+               ->execute([$id]);
+        } else {
+            $db->prepare("DELETE FROM siparisler WHERE hammadde_id = ? AND geldi = 0")
+               ->execute([$hammaddeId]);
+        }
         echo json_encode(['success' => true, 'message' => 'Siparis silindi.']);
+    } elseif ($islem === 'sil') {
+        // Kalıcı sil
+        if ($id) {
+            $db->prepare("DELETE FROM siparisler WHERE id = ?")
+               ->execute([$id]);
+        } else {
+            $db->prepare("DELETE FROM siparisler WHERE hammadde_id = ?")
+               ->execute([$hammaddeId]);
+        }
+        echo json_encode(['success' => true, 'message' => 'Siparis kalici olarak silindi.']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Gecersiz islem.']);
     }
