@@ -509,13 +509,7 @@ $kurlar = getDovizKurlari();
                     <a href="index.php" class="btn-secondary">← Listeye Dön</a>
                     <?php endif; ?>
                     
-                    <!-- Döviz Kuru ve Güncelleme -->
-                    <?php if ($kurlar): ?>
-                    <div style="display:flex;align-items:center;gap:8px;margin-left:12px;padding-left:12px;border-left:1px solid #1e2430;">
-                        <span style="font-size:11px;color:#64748b;">USD</span>
-                        <span style="font-size:13px;color:#60a5fa;font-weight:700;"><?php echo number_format($kurlar['USD_TRY'] ?? 0, 2); ?></span>
-                    </div>
-                    <?php endif; ?>
+                    
                 </div>
             </div>
             
